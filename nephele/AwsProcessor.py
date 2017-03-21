@@ -1,7 +1,7 @@
 from SilentException import SilentException
 from SlashException import SlashException
 
-from AwsConnectionFactory import AwsConnectionFactory
+from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
 from CommandArgumentParser import *
 from stdplus import *
 from run_cmd import run_cmd

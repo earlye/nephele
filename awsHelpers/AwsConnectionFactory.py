@@ -18,10 +18,10 @@ class AwsConnectionFactory:
             try:
                 credentials = json.loads(readfile(credentialsFilename))['Credentials']
             except IOError:
-                print "IOError reading credentials file:{}".format(credentialsFilename)
+                # print "WARN: IOError reading credentials file:{}".format(credentialsFilename)
                 pass
             except ValueError:
-                print "ValueError reading credentials file:{}".format(credentialsFilename)
+                # print "WARN: ValueError reading credentials file:{}".format(credentialsFilename)
                 pass
         self.setMfaCredentials(credentials,profile)
 
@@ -138,3 +138,5 @@ class AwsConnectionFactory:
     
     def getProfile(self):
         return self.profile
+
+AwsConnectionFactory.instance = AwsConnectionFactory()

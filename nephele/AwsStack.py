@@ -1,7 +1,7 @@
 import os;
 
 from AwsProcessor import AwsProcessor
-from AwsConnectionFactory import AwsConnectionFactory
+from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
 from CommandArgumentParser import CommandArgumentParser
 from stdplus import *
 

@@ -14,7 +14,7 @@ import sys
 import traceback
 import yaml
 
-from AwsConnectionFactory import AwsConnectionFactory
+from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
 from AwsProcessor import AwsProcessor
 from AwsProcessorFactoryImpl import AwsProcessorFactoryImpl
 from CommandArgumentParser import CommandArgumentParser        
@@ -175,8 +175,3 @@ def main(argv):
     command_prompt.onecmd("stacks")
     command_prompt.cmdloop()
 
-if __name__ == "__main__":
-    try:
-        main(sys.argv[1:])
-    except SilentException:
-        pass

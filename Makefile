@@ -7,12 +7,16 @@ $(info TWINE_ARGS:$(TWINE_ARGS))
 .PHONY:
 all :
 
-.PHONY :
-clean-dist:
-	rm dist/*
+.PHONY : clean
+clean:
+	python setup.py clean
+	rm -rf /usr/local/lib/python2.7/site-packages/nephele-0.0.*
+	rm -rf dist/*
+	rm -rf build/*
+	rm -rf nephele.egg-info
 
 .PHONY : deploy
-deploy: clean-dist sdist
+deploy: clean sdist
 	twine upload $(TWINE_ARGS) dist/*
 
 .PHONY : register
@@ -25,9 +29,10 @@ sdist:
 	python setup.py sdist bdist_wheel
 
 .PHONY : build
-build:
+build: sdist
 	python setup.py build
 
+
 .PHONY : install
-install:
+install: build
 	python setup.py install
