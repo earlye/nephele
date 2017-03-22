@@ -27,14 +27,14 @@ Installation
 ============
 
 .. code:: bash
-  pip install nephele
+    pip install nephele
 
 Usage
 =====
 
 .. code:: bash
-  $ nephele
-  (aws)/: help
+    $ nephele
+    (aws)/: help
 
 SSH support
 ===========
