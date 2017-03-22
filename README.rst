@@ -26,7 +26,7 @@ or buggy. Also expect syntax to be in a fairly constant state of flux.
 Installation
 ============
 
-:: 
+.. code-block::
     pip install nephele
 
 Usage
