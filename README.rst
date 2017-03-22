@@ -181,5 +181,5 @@ that last bit was obvious :-D
 * Added ability to glob when listing stacks. E.g., `stacks *cass*`
   will list all stacks with "cass" as a substring.
 
-* Renamed from nephele to nephele (after the mythological cloud
+* Renamed from aws-shell to nephele (after the mythological cloud
   nymph), and got the tool to be installable via pip.
