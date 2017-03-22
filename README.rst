@@ -27,6 +27,7 @@ Installation
 ============
 
 .. code-block::
+
     pip install nephele
 
 Usage
