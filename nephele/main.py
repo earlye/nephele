@@ -107,9 +107,9 @@ class AwsRoot(AwsProcessor):
         stackSummaries = []
         while not complete:
             if None == nextToken:
-                stacks = AwsConnectionFactory.instance.getCfClient().list_stacks(StackStatusFilter=stackStatusFilter)
+                stacks = AwsConnectionFactory.getCfClient().list_stacks(StackStatusFilter=stackStatusFilter)
             else:
-                stacks = AwsConnectionFactory.instance.getCfClient().list_stacks(NextToken=nextToken,StackStatusFilter=stackStatusFilter)
+                stacks = AwsConnectionFactory.getCfClient().list_stacks(NextToken=nextToken,StackStatusFilter=stackStatusFilter)
                 #pprint(stacks)
             if not 'NextToken' in stacks:
                 complete = True;

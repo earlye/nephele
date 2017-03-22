@@ -174,6 +174,17 @@ class AwsStack(AwsProcessor):
 
         self.stackResource(stackSummary.stack_name,stackSummary.logical_id)
 
+    def do_template(self,args):
+        """Print the template for the current stack. template -h for detailed help"""
+        parser = CommandArgumentParser("template")
+        args = vars(parser.parse_args(args))
+
+        print "reading template for stack."
+        rawStack = self.wrappedStack['rawStack']
+        template = AwsConnectionFactory.getCfClient().get_template(StackName=rawStack.name)
+        print template['TemplateBody']
+        
+
     def do_stacks(self,args):
         """Same as print -r --include stack"""
         self.do_print(args + " -r --include stack" )

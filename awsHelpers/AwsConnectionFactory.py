@@ -117,7 +117,11 @@ class AwsConnectionFactory:
     def getCfResource(self):
         return self.getSession().resource('cloudformation')
 
-    def getCfClient(self):
+    @staticmethod
+    def getCfClient():
+        return AwsConnectionFactory.instance._getCfClient()
+
+    def _getCfClient(self):
         return self.getSession().client('cloudformation')
 
     @staticmethod
