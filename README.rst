@@ -26,15 +26,15 @@ or buggy. Also expect syntax to be in a fairly constant state of flux.
 Installation
 ============
 
-.. code:: bash
-  pip install nephele
+:: 
+    pip install nephele
 
 Usage
 =====
 
-.. code:: bash
-  $ nephele
-  (aws)/: help
+:: 
+     $ nephele
+     (aws)/: help
 
 SSH support
 ===========
