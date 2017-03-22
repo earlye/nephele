@@ -29,10 +29,15 @@ sdist:
 	python setup.py sdist bdist_wheel
 
 .PHONY : build
-build: sdist
+build: test sdist
 	python setup.py build
 
 
 .PHONY : install
 install: build
 	python setup.py install
+
+.PHONY : test
+test :
+	python setup.py develop
+	python setup.py nosetests -s

@@ -13,6 +13,13 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
+try:
+    extra = dict(test_suite="tests.test.suite", include_package_data=True)
+except ImportError:
+    from distutils.core import setup
+    extra = {}
+print "extra: {}".format(extra)
+
 # Get the long description from the README file
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
@@ -23,7 +30,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.0.15',
+    version='0.0.16',
 
     description='A shell for AWS',
     long_description=long_description,
@@ -110,4 +117,6 @@ setup(
             'nephele=nephele.main:main',
         ],
     },
+
+    **extra
 )
