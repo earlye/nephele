@@ -168,10 +168,17 @@ def main(argv):
     atexit.register(AwsProcessor.killBackgroundTasks)
     AwsProcessor.processorFactory = AwsProcessorFactoryImpl()
 
+    awsConfigFilename = os.path.expanduser("~/.aws/config")
+    if not os.path.exists(awsConfigFilename):
+        print "ERROR: aws cli has not been configured."
+        pid = fexecvp(['aws','configure'])
+        os.waitpid(pid,0)
+
     command_prompt = AwsRoot()
     command_prompt.onecmd("profile -v {}".format(args['profile']))
     if None != args['mfa']:
         command_prompt.onecmd("mfa {}".format(args['mfa']))
+        
     command_prompt.onecmd("stacks")
     command_prompt.cmdloop()
 
