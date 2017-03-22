@@ -124,41 +124,41 @@ Doesn't include bug fixes, or any features I forgot to list. Maybe
 that last bit was obvious :-D
 
 * You can now input an MFA token by running `mfa {token}`. It's
-rudimentary support at this point, and likely broken if you've
-never used [aws-mfa](https://github.com/lonelyplanet/aws-mfa) before.
+  rudimentary support at this point, and likely broken if you've never
+  used [aws-mfa](https://github.com/lonelyplanet/aws-mfa) before.
 
 * You can now ssh with shorthanded port forwarding. Basically, if you
-want to forward a port on the remote server via the same local port,
-you no longer have to use the `-L {port}:localhost:{port}`
-syntax. Instead, just say `-L {port}`. You can still use the server as
-a tunnel to yet another server, or choose different local/remote port
-numbers with the old syntax though.
+  want to forward a port on the remote server via the same local port,
+  you no longer have to use the `-L {port}:localhost:{port}`
+  syntax. Instead, just say `-L {port}`. You can still use the server
+  as a tunnel to yet another server, or choose different local/remote
+  port numbers with the old syntax though.
 
 * When launching, aws-shell automatically runs "stacks" for you.
 
-* --profile (short: -p) selects a specific AWS profile. This is helpful
-when other processes require that your default profile be one other than
-the one you would like aws-shell to use.
+* --profile (short: -p) selects a specific AWS profile. This is
+  helpful when other processes require that your default profile be
+  one other than the one you would like aws-shell to use.
 
 * aws-shell now knows how to get your aws device info. I also tried to
-make it file-compatible with aws-mfa, so you should in theory not need
-the separate aws-mfa tool any longer - just use aws-shell to manage your
-.aws/{mfa-related-files}, and you should be good to go. Of course, my
-wife always says she wants to move to Theory, because everything
-works... in Theory.
+  make it file-compatible with aws-mfa, so you should in theory not
+  need the separate aws-mfa tool any longer - just use aws-shell to
+  manage your .aws/{mfa-related-files}, and you should be good to
+  go. Of course, my wife always says she wants to move to Theory,
+  because everything works... in Theory.
 
 * --mfa (short: -m) provide your mfa command at launch. If you *know*
-your cached mfa credentials are expired, this saves the step of waiting
-for aws-shell to get access denied.
+  your cached mfa credentials are expired, this saves the step of
+  waiting for aws-shell to get access denied.
 
-* there is now a `profile` command to change profiles after you've 
-started aws-shell.
+* there is now a `profile` command to change profiles after you've
+  started aws-shell.
 
 * `stacks` now adds `-e` and `-i` parameters so you can exclude or
-include new stack states in the filter.
+  include new stack states in the filter.
 
 * `~/.aws-shell.yaml` is the new config file. It has one setting for now,
-`profile`. Example:
+  `profile`. Example:
 
 .. code-block:: config
 
@@ -166,20 +166,20 @@ include new stack states in the filter.
     profile: {aws profile name}
 
 * `ssh` commands now have a `-R`/`--replace-key` option. It is quite
-possible in AWS for IP addresses to get recycled, especially if you
-are creating/tearing-down cloudformation stacks while iterating on
-their templates. When this happens, you don't want to have to go hack
-on `~/.ssh/known_hosts` in order to ssh in to the host. This option
-will run the appropriate command (`ssh-keygen -R {host}`) to remove
-the entry before running ssh.
+  possible in AWS for IP addresses to get recycled, especially if you
+  are creating/tearing-down cloudformation stacks while iterating on
+  their templates. When this happens, you don't want to have to go
+  hack on `~/.ssh/known_hosts` in order to ssh in to the host. This
+  option will run the appropriate command (`ssh-keygen -R {host}`) to
+  remove the entry before running ssh.
 
 * auto-scaling groups now support the `terminateInstance` command.
 
 * AwsStack now prints stack events and outputs as if they were normal
-stack resources.
+  stack resources.
 
 * Added ability to glob when listing stacks. E.g., `stacks *cass*`
-will list all stacks with "cass" as a substring.
+  will list all stacks with "cass" as a substring.
 
 * Renamed from aws-shell to nephele (after the mythological cloud
-nymph), and got the tool to be installable via pip.
+  nymph), and got the tool to be installable via pip.
