@@ -29,34 +29,12 @@ Installation
 .. code:: bash
   pip install nephele
 
-
-.. code:: bash
-  pip install future
-  pip install boto3
-  git clone git@github.com:earlye/aws-shell.git
-  cd aws-shell
-  ln -s $(pwd)/aws-shell {some directory on your $PATH}
-
 Usage
 =====
 
 .. code:: bash
-  # Configure aws credentials. Skip this if you've done it before.
-  $ aws configure
-  
-  # Run aws shell
-  $ aws-shell
+  $ nephele
   (aws)/: help
-
-Documented commands (type help <topic>):
-========================================
-delete_stack  exit  help  quit  ssh  stack  stack_resource  stacks  up
-
-Provide MFA token:
-------------------
-
-.. code:: bash
-  (aws)/: mfa 848034
 
 SSH support
 ===========
@@ -194,3 +172,6 @@ resources.
 
 * Added ability to glob when listing stacks. E.g., `stacks *cass*` will list
 all stacks with "cass" as a substring.
+
+* Renamed from aws-shell to nephele (after the mythological cloud nymph), and
+got the tool to be installable via pip.
