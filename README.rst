@@ -62,49 +62,52 @@ If you've navigated to an autoscaling group, you don't even need to
 know the instance id. You can ssh by the instance's index in the
 autoscaling group's list of instances:
 
-.. code:: bash
-  (aws)/stack:{stack}/stack:{substack}/: asg 0
-  loading auto scaling group 0
-  loading stack resource arn:{arn}
-  AutoScaling Group:{name}
-  === Instances ===
-    0 Healthy az-2a {instance-id}
-    1 Healthy az-2b {instance-id}
-    2 Healthy az-2c {instance-id}
-  (aws)/stack:{stack}/stack:{substack}/asg:{asg}/: ssh 2
-  /usr/bin/ssh {first private ip}
-  Last login: {sometime} from {somewhere}
+.. code-block:: bash
+
+    (aws)/stack:{stack}/stack:{substack}/: asg 0
+    loading auto scaling group 0
+    loading stack resource arn:{arn}
+    AutoScaling Group:{name}
+    === Instances ===
+     0 Healthy az-2a {instance-id}
+     1 Healthy az-2b {instance-id}
+     2 Healthy az-2c {instance-id}
+    (aws)/stack:{stack}/stack:{substack}/asg:{asg}/: ssh 2
+    /usr/bin/ssh {first private ip}
+    Last login: {sometime} from {somewhere}
   
          __|  __|_  )
          _|  (     /   Amazon Linux AMI
         ___|\___|___|
   
-  https://aws.amazon.com/amazon-linux-ami/2016.09-release-notes/
+    https://aws.amazon.com/amazon-linux-ami/2016.09-release-notes/
 
 It also supports port forwarding!
 
-.. code:: bash
-  (aws)/stack:{stack}/stack:{substack}/asg:{asg}/: ssh 2 -L 8888:localhost:8888
-  /usr/bin/ssh {first private ip}
-  Last login: {sometime} from {somewhere}
+.. code-block:: bash
+
+    (aws)/stack:{stack}/stack:{substack}/asg:{asg}/: ssh 2 -L 8888:localhost:8888
+    /usr/bin/ssh {first private ip}  
+    Last login: {sometime} from {somewhere}
 
          __|  __|_  )
          _|  (     /   Amazon Linux AMI
         ___|\___|___|
 
-  https://aws.amazon.com/amazon-linux-ami/2016.09-release-notes/
-  $ exit
-  (aws)/stack:{stack}/stack:{substack}/asg:{asg}/: ssh 2 -L 8888 # <-- useful shorthand!
+    https://aws.amazon.com/amazon-linux-ami/2016.09-release-notes/
+    $ exit
+    (aws)/stack:{stack}/stack:{substack}/asg:{asg}/: ssh 2 -L 8888 # <-- useful shorthand!
 
 So how do you set up your `~/.ssh/config` for this? I don't really
 profess to be an expert, but here's the magic from mine, modified
 to protect my account, of course:
 
-.. code:: config
-  Host 192.168.* ### Not the actual subnet, obviously - adjust to match your subnet
-     User {host-user}
-     IdentityFile {bastion-identity-path}
-     ProxyCommand ssh -i {host-identity-path} -W %h:%p {bastion-user}@{bastion-host-ip-or-name}
+.. code-block:: config
+
+    Host 192.168.* ### Not the actual subnet, obviously - adjust to match your subnet
+       User {host-user}
+       IdentityFile {bastion-identity-path}
+       ProxyCommand ssh -i {host-identity-path} -W %h:%p {bastion-user}@{bastion-host-ip-or-name}
 
 Obviously, `{host-user}`, `{bastion-identity-path}`,
 `{host-identity-path}`, `{bastion-user}`, and
