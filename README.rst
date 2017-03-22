@@ -33,9 +33,10 @@ Installation
 Usage
 =====
 
-:: 
-     $ nephele
-     (aws)/: help
+.. code-block:: bash
+
+    $ nephele
+    (aws)/: help
 
 SSH support
 ===========
