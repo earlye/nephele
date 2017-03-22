@@ -42,9 +42,9 @@ SSH support
 ===========
 
 If you've set up your `~/.ssh/config` so that using ssh to connect via an instance's IP
-address will "just work," then this is probably the best part of `aws-shell`.
+address will "just work," then this is probably the best part of `nephele`.
 
-aws-shell can ssh to an instance without you having to figure out its
+nephele can ssh to an instance without you having to figure out its
 ip, modify /etc/host, or know anything other than its aws instance id:
 
 .. code:: bash
@@ -134,30 +134,30 @@ that last bit was obvious :-D
   as a tunnel to yet another server, or choose different local/remote
   port numbers with the old syntax though.
 
-* When launching, aws-shell automatically runs "stacks" for you.
+* When launching, nephele automatically runs "stacks" for you.
 
 * --profile (short: -p) selects a specific AWS profile. This is
   helpful when other processes require that your default profile be
-  one other than the one you would like aws-shell to use.
+  one other than the one you would like nephele to use.
 
-* aws-shell now knows how to get your aws device info. I also tried to
+* nephele now knows how to get your aws device info. I also tried to
   make it file-compatible with aws-mfa, so you should in theory not
-  need the separate aws-mfa tool any longer - just use aws-shell to
+  need the separate aws-mfa tool any longer - just use nephele to
   manage your .aws/{mfa-related-files}, and you should be good to
   go. Of course, my wife always says she wants to move to Theory,
   because everything works... in Theory.
 
 * --mfa (short: -m) provide your mfa command at launch. If you *know*
   your cached mfa credentials are expired, this saves the step of
-  waiting for aws-shell to get access denied.
+  waiting for nephele to get access denied.
 
 * there is now a `profile` command to change profiles after you've
-  started aws-shell.
+  started nephele.
 
 * `stacks` now adds `-e` and `-i` parameters so you can exclude or
   include new stack states in the filter.
 
-* `~/.aws-shell.yaml` is the new config file. It has one setting for now,
+* `~/.nephele.yaml` is the new config file. It has one setting for now,
   `profile`. Example:
 
 .. code-block:: config
@@ -181,5 +181,5 @@ that last bit was obvious :-D
 * Added ability to glob when listing stacks. E.g., `stacks *cass*`
   will list all stacks with "cass" as a substring.
 
-* Renamed from aws-shell to nephele (after the mythological cloud
+* Renamed from nephele to nephele (after the mythological cloud
   nymph), and got the tool to be installable via pip.
