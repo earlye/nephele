@@ -145,17 +145,18 @@ class AwsRoot(AwsProcessor):
 
         self.stackResource(stackName,logicalId)
 
-def main(argv):
+def main():
+    argv = sys.argv
     configFile = os.path.join(os.path.expanduser("~"),".aws-shell.yaml")
     config={}
     if os.path.exists(configFile):
         print "Loading config:{}".format(configFile)
         config = yaml.load(readfile(configFile))        
 
-    parser = CommandArgumentParser()
+    parser = CommandArgumentParser(argv[0])
     parser.add_argument('-p','--profile',dest='profile',default=defaultifyDict(config,'profile','default'),help='select aws profile');
     parser.add_argument('-m','--mfa',dest='mfa',help='provide mfa code');
-    args = vars(parser.parse_args(argv))
+    args = vars(parser.parse_args(argv[1:]))
     
     histfile = os.path.join(os.path.expanduser("~"), ".aws_hist")
     try:
