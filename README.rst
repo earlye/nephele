@@ -118,8 +118,10 @@ swapped. Like I said, not an expert on ssh proxying.
 New Features
 ============
 
-_Most Recent Last. Doesn't include bug fixes, or any features I forgot
-to list. Maybe that last bit was obvious :-D_
+_Most Recent Last._
+
+Doesn't include bug fixes, or any features I forgot to list. Maybe
+that last bit was obvious :-D
 
 * You can now input an MFA token by running `mfa {token}`. It's
 rudimentary support at this point, and likely broken if you've
@@ -158,25 +160,26 @@ include new stack states in the filter.
 * `~/.aws-shell.yaml` is the new config file. It has one setting for now,
 `profile`. Example:
 
-.. code:: config
-  ---
-  profile: {aws profile name}
+.. code-block:: config
+
+    ---
+    profile: {aws profile name}
 
 * `ssh` commands now have a `-R`/`--replace-key` option. It is quite
-possible in AWS for IP addresses to get recycled, especially if you 
+possible in AWS for IP addresses to get recycled, especially if you
 are creating/tearing-down cloudformation stacks while iterating on
-their templates. When this happens, you don't want to have to go
-hack on `~/.ssh/known_hosts` in order to ssh in to the host. This option
+their templates. When this happens, you don't want to have to go hack
+on `~/.ssh/known_hosts` in order to ssh in to the host. This option
 will run the appropriate command (`ssh-keygen -R {host}`) to remove
 the entry before running ssh.
 
 * auto-scaling groups now support the `terminateInstance` command.
 
-* AwsStack now prints stack events and outputs as if they were normal stack
-resources.
+* AwsStack now prints stack events and outputs as if they were normal
+stack resources.
 
-* Added ability to glob when listing stacks. E.g., `stacks *cass*` will list
-all stacks with "cass" as a substring.
+* Added ability to glob when listing stacks. E.g., `stacks *cass*`
+will list all stacks with "cass" as a substring.
 
-* Renamed from aws-shell to nephele (after the mythological cloud nymph), and
-got the tool to be installable via pip.
+* Renamed from aws-shell to nephele (after the mythological cloud
+nymph), and got the tool to be installable via pip.
