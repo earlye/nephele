@@ -1,4 +1,4 @@
-aws-shell: a shell for aws.
+Nephele: a shell for aws.
 ```````````````````````````
 
 Overview
