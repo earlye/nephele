@@ -1,5 +1,6 @@
 import os
 import re
+import fnmatch
 
 from pprint import pprint
 from stdplus import readfile
@@ -82,3 +83,32 @@ def readSshConfig(path=os.path.expanduser('~/.ssh/config')):
     config = readfile(path)
     return parseSshConfig(config)
 
+def getSshHost(sshConfig,host):
+    for pattern,settings in sshConfig.hosts.iteritems():
+        if fnmatch.fnmatch(host,pattern):
+            return settings
+        
+def resetKnownHost(ip):
+    removeKnownHosts([ip])
+    keyscanHost(ip)
+
+def resetKnownHosts(ips):
+    removeKnownHosts(ips)
+    for ip in ips:
+        keyscanHost(ip)
+
+def keyscanHost(ip):
+    sshConfig = readSshConfig()
+    sshHost = getSshHost(sshConfig,ip)
+    proxyCommand = ''
+    if sshHost and 'ProxyCommand' in sshHost.settings and sshHost.settings['ProxyCommand'] and sshHost.settings['ProxyCommand'][0].value:
+        proxyCommand = sshHost.settings['ProxyCommand'][0].value.replace("-W %h:%p",'')
+    run("{} ssh-keyscan -H {} >> ~/.ssh/known_hosts".format(proxyCommand, ip))    
+
+def removeKnownHosts(ips):
+    if not ips:
+        return
+    args = []
+    for ip in ips:
+        args.append("-R {}".format(ip))
+    run("ssh-keygen {}".format(" ".join(args)))

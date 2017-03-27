@@ -154,7 +154,7 @@ class AwsProcessor(cmd.Cmd):
             print("- resource_type:{}".format(stackResource.resource_type))
             print("- stack_id:{}".format(stackResource.stack_id))
 
-    def ssh(self,instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0):
+    def ssh(self,instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None):
         client = AwsConnectionFactory.getEc2Client()
         response = client.describe_instances(InstanceIds=[instanceId])
         networkInterfaces = response['Reservations'][0]['Instances'][0]['NetworkInterfaces'];
@@ -187,6 +187,9 @@ class AwsProcessor(cmd.Cmd):
 
             if verbosity > 0:
                 args.append("-" + "v" * verbosity)
+
+            if command:
+                args.append(command)
                 
             print " ".join(args)
             pid = fexecvp(args)

@@ -1,4 +1,5 @@
-import os;
+import os
+import pyperclip
 
 from AwsProcessor import AwsProcessor
 from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
@@ -183,7 +184,29 @@ class AwsStack(AwsProcessor):
         rawStack = self.wrappedStack['rawStack']
         template = AwsConnectionFactory.getCfClient().get_template(StackName=rawStack.name)
         print template['TemplateBody']
+
+    def getWrappedItem(self,typeName,IdOrName):
+        try:
+            index = int(IdOrName)
+            return self.wrappedStack['resourcesByTypeIndex'][typeName][index]
+        except ValueError:
+            return self.wrappedStack['resourcesByTypeName'][typeName][IdOrName]
         
+    def getOutputs(self,outputs):
+        values = []        
+        for output in outputs:
+            values.append(self.getWrappedItem('outputs',output).resource_status)
+        pprint(values)
+        return values
+
+    def do_copy(self,args):
+        """Copy specified id to stack. copy -h for detailed help."""
+        parser = CommandArgumentParser("copy")
+        parser.add_argument('-a','--asg',dest='asg',nargs='+',required=False,default=[],help='Copy specified ASG info.')
+        parser.add_argument('-o','--output',dest='output',nargs='+',required=False,default=[],help='Copy specified output info.')        
+        args = vars(parser.parse_args(args))
+        if args['output']:
+            pyperclip.copy("\n".join(self.getOutputs(args['output'])))
 
     def do_stacks(self,args):
         """Same as print -r --include stack"""

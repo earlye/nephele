@@ -16,13 +16,8 @@ clean:
 	rm -rf nephele.egg-info
 
 .PHONY : deploy
-deploy: clean sdist
+deploy: clean install
 	twine upload $(TWINE_ARGS) dist/*
-
-.PHONY : register
-register: sdist
-	# twine register $(TWINE_ARGS) dist/nephele-$(VERSION)-py2-none-any.whl
-	# twine register $(TWINE_ARGS) dist/nephele-$(VERSION).tar.gz
 
 .PHONY : sdist
 sdist:

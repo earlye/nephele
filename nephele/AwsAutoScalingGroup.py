@@ -71,6 +71,24 @@ class AwsAutoScalingGroup(AwsProcessor):
         client.set_desired_capacity(AutoScalingGroupName=self.scalingGroup,DesiredCapacity=value,HonorCooldown=True)
         print "Scaling activity in progress"
 
+    def do_run(self,args):
+        """SSH to each instance in turn and run specified command"""
+        parser = CommandArgumentParser("run")
+        parser.add_argument('-R','--replace-key',dest='replaceKey',default=False,action='store_true',help="Replace the host's key. This is useful when AWS recycles an IP address you've seen before.")
+        parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
+        parser.add_argument(dest='command',nargs='+',help="Command to run on all hosts.") # consider adding a filter option later
+        parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
+        args = vars(parser.parse_args(args))
+
+        replaceKey = args['replaceKey']
+        keyscan = args['keyscan']
+        verbosity = args['verbosity']
+        
+        instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
+        for instance in instances: # Again, consider a filter.
+            self.ssh(instance['InstanceId'],0,[],replaceKey,keyscan,False,verbosity," ".join(args['command']))
+        
+
     def do_ssh(self,args):
         """SSH to an instance. ssh -h for detailed help"""
         parser = CommandArgumentParser("ssh")
@@ -80,7 +98,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-R','--replace-key',dest='replaceKey',default=False,action='store_true',help="Replace the host's key. This is useful when AWS recycles an IP address you've seen before.")
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
         parser.add_argument('-B','--background',dest='background',default=False,action='store_true',help="Run in the background. (e.g., forward an ssh session and then do other stuff in aws-shell).")
-        parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');
+        parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
         args = vars(parser.parse_args(args))
 
         interfaceNumber = int(args['interface-number'])
