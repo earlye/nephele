@@ -22,6 +22,7 @@ __all__ = [
     'removeKnownHosts',
     'resetKnownHost',
     'resetKnownHosts',
+    'run',
     'run_cmd',
     'writefile'
 ]

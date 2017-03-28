@@ -165,13 +165,10 @@ class AwsProcessor(cmd.Cmd):
         else:
             address = "{}".format(networkInterfaces[interfaceNumber]['PrivateIpAddress'])
             if replaceKey or keyscan:
-                args=["/usr/bin/ssh-keygen","-R",address]
-                print " ".join(args)
-                os.waitpid(fexecvp(args),0)
+                resetKnownHost(address)
 
             if keyscan:
-                # Have to read ~/.ssh/config to see if there's a proxy command :/                
-                config = readSshConfig()
+                keyscanHost(address)
                 
             args=["/usr/bin/ssh",address]
             if not forwarding == None:

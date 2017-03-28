@@ -4,6 +4,7 @@ import fnmatch
 
 from pprint import pprint
 from stdplus import readfile
+from _run_cmd import run
 
 class SshConfigBlock(list):
     def __init__(self,line,lineNumber):

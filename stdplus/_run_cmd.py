@@ -29,7 +29,15 @@ class RunCmdResult(object):
             print("\n".join(lines), file=sys.stderr)
         self.stderr.extend(lines)
 
+def run(command):
+    """ Run a command, but do not capture its output. Raise exception on non-zero status """
+    print( command )
+    result = os.system(command)
+    if 0 != result:
+        raise Exception("Command '{}' failed".format(command))
+        
 def run_cmd(args,throwOnNonZero = True,echoCommand=True,echoStdout=False,echoStderr=True):
+    """ Run a command and capture its output. Optionally raise exception on non-zero status """
     if echoCommand:
         print(' '.join(args))
     # set the use show window flag, might make conditional on being in Windows:
@@ -85,3 +93,4 @@ def run_cmd(args,throwOnNonZero = True,echoCommand=True,echoStdout=False,echoStd
         sys.stderr.flush();
         raise Exception("Command Exited with status=%d" %result.retCode)
     return result;
+
