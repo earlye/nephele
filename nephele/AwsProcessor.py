@@ -4,7 +4,6 @@ from SlashException import SlashException
 from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
 from CommandArgumentParser import *
 from stdplus import *
-from run_cmd import run_cmd
 
 import cmd
 import json

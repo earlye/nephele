@@ -21,7 +21,6 @@ from CommandArgumentParser import CommandArgumentParser
 
 from botocore.exceptions import ClientError
 from fnmatch import fnmatch
-from run_cmd import run_cmd
 from pprint import pprint
 from stdplus import *
 
@@ -146,40 +145,42 @@ class AwsRoot(AwsProcessor):
         self.stackResource(stackName,logicalId)
 
 def main():
-    argv = sys.argv
-    configFile = os.path.join(os.path.expanduser("~"),".aws-shell.yaml")
-    config={}
-    if os.path.exists(configFile):
-        print "Loading config:{}".format(configFile)
-        config = yaml.load(readfile(configFile))        
-
-    parser = CommandArgumentParser(argv[0])
-    parser.add_argument('-p','--profile',dest='profile',default=defaultifyDict(config,'profile','default'),help='select aws profile');
-    parser.add_argument('-m','--mfa',dest='mfa',help='provide mfa code');
-    args = vars(parser.parse_args(argv[1:]))
-    
-    histfile = os.path.join(os.path.expanduser("~"), ".aws_hist")
     try:
-        readline.read_history_file(histfile)
-        readline.set_history_length(1000)
-    except IOError:
+        argv = sys.argv
+        configFile = os.path.join(os.path.expanduser("~"),".aws-shell.yaml")
+        config={}
+        if os.path.exists(configFile):
+            print "Loading config:{}".format(configFile)
+            config = yaml.load(readfile(configFile))        
+
+        parser = CommandArgumentParser(argv[0])
+        parser.add_argument('-p','--profile',dest='profile',default=defaultifyDict(config,'profile','default'),help='select aws profile');
+        parser.add_argument('-m','--mfa',dest='mfa',help='provide mfa code');
+        args = vars(parser.parse_args(argv[1:]))
+
+        histfile = os.path.join(os.path.expanduser("~"), ".aws_hist")
+        try:
+            readline.read_history_file(histfile)
+            readline.set_history_length(1000)
+        except IOError:
+            pass
+        atexit.register(readline.write_history_file, histfile)
+
+        atexit.register(AwsProcessor.killBackgroundTasks)
+        AwsProcessor.processorFactory = AwsProcessorFactoryImpl()
+
+        awsConfigFilename = os.path.expanduser("~/.aws/config")
+        if not os.path.exists(awsConfigFilename):
+            print "ERROR: aws cli has not been configured."
+            pid = fexecvp(['aws','configure'])
+            os.waitpid(pid,0)
+
+        command_prompt = AwsRoot()
+        command_prompt.onecmd("profile -v {}".format(args['profile']))
+        if None != args['mfa']:
+            command_prompt.onecmd("mfa {}".format(args['mfa']))
+
+        command_prompt.onecmd("stacks")
+        command_prompt.cmdloop()
+    except SilentException:
         pass
-    atexit.register(readline.write_history_file, histfile)
-
-    atexit.register(AwsProcessor.killBackgroundTasks)
-    AwsProcessor.processorFactory = AwsProcessorFactoryImpl()
-
-    awsConfigFilename = os.path.expanduser("~/.aws/config")
-    if not os.path.exists(awsConfigFilename):
-        print "ERROR: aws cli has not been configured."
-        pid = fexecvp(['aws','configure'])
-        os.waitpid(pid,0)
-
-    command_prompt = AwsRoot()
-    command_prompt.onecmd("profile -v {}".format(args['profile']))
-    if None != args['mfa']:
-        command_prompt.onecmd("mfa {}".format(args['mfa']))
-        
-    command_prompt.onecmd("stacks")
-    command_prompt.cmdloop()
-
