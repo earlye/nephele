@@ -1,6 +1,7 @@
-from AwsProcessor import AwsProcessor
+from AwsProcessor import *
 from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
 from CommandArgumentParser import *
+from joblib import Parallel, delayed
 
 import boto3
 
@@ -78,17 +79,23 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
         parser.add_argument(dest='command',nargs='+',help="Command to run on all hosts.") # consider adding a filter option later
         parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
+        parser.add_argument('-j',dest='jobs',type=int,default=1,help='Number of hosts to contact in parallel');        
         args = vars(parser.parse_args(args))
 
         replaceKey = args['replaceKey']
         keyscan = args['keyscan']
         verbosity = args['verbosity']
+        jobs = args['jobs']
+
+        if replaceKey or keyscan:
+            for instance in instances:
+                stdplus.resetKnownHost(instance)
         
         instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
-        for instance in instances: # Again, consider a filter.
-            self.ssh(instance['InstanceId'],0,[],replaceKey,keyscan,False,verbosity," ".join(args['command']))
+        Parallel(n_jobs=jobs)(
+            delayed(ssh)(instance['InstanceId'],0,[],False,False,False,verbosity," ".join(args['command'])) for instance in instances
+        )
         
-
     def do_ssh(self,args):
         """SSH to an instance. ssh -h for detailed help"""
         parser = CommandArgumentParser("ssh")
@@ -111,9 +118,9 @@ class AwsAutoScalingGroup(AwsProcessor):
             index = int(args['instance'])
             instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
             instance = instances[index]
-            self.ssh(instance['InstanceId'],interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity)
+            ssh(instance['InstanceId'],interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity)
         except ValueError:
-            self.ssh(args['instance'],interfaceNumber,forwarding,replaceKey,keyscan,background)
+            ssh(args['instance'],interfaceNumber,forwarding,replaceKey,keyscan,background)
 
     def do_startInstance(self,args):
         """Start specified instance"""

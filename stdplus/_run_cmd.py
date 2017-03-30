@@ -8,6 +8,7 @@ import sys
 import threading
 
 class RunCmdResult(object):
+    """ Container for the results of run_cmd """
     def __init__(self,echoStdout,echoStderr):
         self.retCode = 0;
         self.stdout = [];
@@ -29,9 +30,11 @@ class RunCmdResult(object):
             print("\n".join(lines), file=sys.stderr)
         self.stderr.extend(lines)
 
-def run(command):
+def run(command,echoCommand=True):
     """ Run a command, but do not capture its output. Raise exception on non-zero status """
-    print( command )
+    if echoCommand:
+        print( command )
+        sys.stdout.flush()
     result = os.system(command)
     if 0 != result:
         raise Exception("Command '{}' failed".format(command))
@@ -40,6 +43,7 @@ def run_cmd(args,throwOnNonZero = True,echoCommand=True,echoStdout=False,echoStd
     """ Run a command and capture its output. Optionally raise exception on non-zero status """
     if echoCommand:
         print(' '.join(args))
+        sys.stdout.flush()
     # set the use show window flag, might make conditional on being in Windows:
     if platform.system() == 'Windows':
         startupinfo = subprocess.STARTUPINFO()

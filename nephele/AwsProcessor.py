@@ -14,6 +14,49 @@ import traceback
 from botocore.exceptions import ClientError
 from pprint import pprint
 
+def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None):
+    client = AwsConnectionFactory.getEc2Client()
+    response = client.describe_instances(InstanceIds=[instanceId])
+    networkInterfaces = response['Reservations'][0]['Instances'][0]['NetworkInterfaces'];
+    if None == interfaceNumber:
+        number = 0
+        for interface in networkInterfaces:
+            print "{0:3d} {1}".format(number,interface['PrivateIpAddress'])
+            number += 1
+    else:
+        address = "{}".format(networkInterfaces[interfaceNumber]['PrivateIpAddress'])
+        if replaceKey or keyscan:
+            resetKnownHost(address)
+
+        if keyscan:
+            keyscanHost(address)
+
+        args=["/usr/bin/ssh",address]
+        if not forwarding == None:
+            for forwardInfo in forwarding:
+                if isInt(forwardInfo):
+                    forwardInfo = "{0}:localhost:{0}".format(forwardInfo)
+                args.extend(["-L",forwardInfo])
+            if background:
+                args.extend(["-N","-n"])
+        else:
+            background = False # Background is ignored if not forwarding
+
+        if verbosity > 0:
+            args.append("-" + "v" * verbosity)
+
+        if command:
+            args.append(command)
+
+        print " ".join(args)
+        pid = fexecvp(args)
+        if background:
+            print "SSH Started in background. pid:{}".format(pid)
+            AwsProcessor.backgroundTasks.append(pid)
+        else:
+            os.waitpid(pid,0)
+
+
 class AwsProcessor(cmd.Cmd):
     backgroundTasks=[]
     resourceTypeAliases={ 'AWS::AutoScaling::AutoScalingGroup' : 'asg',
@@ -153,47 +196,6 @@ class AwsProcessor(cmd.Cmd):
             print("- resource_type:{}".format(stackResource.resource_type))
             print("- stack_id:{}".format(stackResource.stack_id))
 
-    def ssh(self,instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None):
-        client = AwsConnectionFactory.getEc2Client()
-        response = client.describe_instances(InstanceIds=[instanceId])
-        networkInterfaces = response['Reservations'][0]['Instances'][0]['NetworkInterfaces'];
-        if None == interfaceNumber:
-            number = 0
-            for interface in networkInterfaces:
-                print "{0:3d} {1}".format(number,interface['PrivateIpAddress'])
-                number += 1
-        else:
-            address = "{}".format(networkInterfaces[interfaceNumber]['PrivateIpAddress'])
-            if replaceKey or keyscan:
-                resetKnownHost(address)
-
-            if keyscan:
-                keyscanHost(address)
-                
-            args=["/usr/bin/ssh",address]
-            if not forwarding == None:
-                for forwardInfo in forwarding:
-                    if isInt(forwardInfo):
-                        forwardInfo = "{0}:localhost:{0}".format(forwardInfo)
-                    args.extend(["-L",forwardInfo])
-                if background:
-                    args.extend(["-N","-n"])
-            else:
-                background = False # Background is ignored if not forwarding
-
-            if verbosity > 0:
-                args.append("-" + "v" * verbosity)
-
-            if command:
-                args.append(command)
-                
-            print " ".join(args)
-            pid = fexecvp(args)
-            if background:
-                print "SSH Started in background. pid:{}".format(pid)
-                AwsProcessor.backgroundTasks.append(pid)
-            else:
-                os.waitpid(pid,0)
 
     def do_ssh(self,args):
         """SSH to an instance. ssh -h for detailed help."""
@@ -214,5 +216,5 @@ class AwsProcessor(cmd.Cmd):
         keyscan = args['keyscan']
         background = args['background']
         verbosity = args['verbosity']
-        self.ssh(instanceId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity)
+        ssh(instanceId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity)
 

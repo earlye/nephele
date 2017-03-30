@@ -1,10 +1,13 @@
 import os
 import re
 import fnmatch
+import threading
 
 from pprint import pprint
 from stdplus import readfile
 from _run_cmd import run
+
+knownHostsLock = threading.Lock()
 
 class SshConfigBlock(list):
     def __init__(self,line,lineNumber):
@@ -104,7 +107,9 @@ def keyscanHost(ip):
     proxyCommand = ''
     if sshHost and 'ProxyCommand' in sshHost.settings and sshHost.settings['ProxyCommand'] and sshHost.settings['ProxyCommand'][0].value:
         proxyCommand = sshHost.settings['ProxyCommand'][0].value.replace("-W %h:%p",'')
-    run("{} ssh-keyscan -H {} >> ~/.ssh/known_hosts".format(proxyCommand, ip))    
+    global knownHostsLock
+    with knownHostsLock:
+        run("{} ssh-keyscan -H {} >> ~/.ssh/known_hosts".format(proxyCommand, ip))    
 
 def removeKnownHosts(ips):
     if not ips:
@@ -112,4 +117,7 @@ def removeKnownHosts(ips):
     args = []
     for ip in ips:
         args.append("-R {}".format(ip))
-    run("ssh-keygen {}".format(" ".join(args)))
+    global knownHostsLock
+    with knownHostsLock:
+        run("ssh-keygen {}".format(" ".join(args)))
+
