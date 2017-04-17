@@ -49,7 +49,7 @@ class AwsConnectionFactory:
 
         print "arn_file:{} [profile:{}]".format(arn_file,profile)
         if os.access(arn_file,os.R_OK):
-            return readfile(arn_file)
+            return readfile(arn_file).strip()
         else:
             arn = self.load_arn_from_aws(profile)
             writefile(arn_file, arn)
