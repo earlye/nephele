@@ -4,6 +4,7 @@ from CommandArgumentParser import *
 from joblib import Parallel, delayed
 
 import boto3
+import stdplus
 
 class AwsAutoScalingGroup(AwsProcessor):
     def __init__(self,scalingGroup,parent):
@@ -87,13 +88,13 @@ class AwsAutoScalingGroup(AwsProcessor):
         verbosity = args['verbosity']
         jobs = args['jobs']
 
-        if replaceKey or keyscan:
-            for instance in instances:
-                stdplus.resetKnownHost(instance)
-        
         instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
+        # if replaceKey or keyscan:
+        #     for instance in instances:
+        #         stdplus.resetKnownHost(instance)
+        
         Parallel(n_jobs=jobs)(
-            delayed(ssh)(instance['InstanceId'],0,[],False,False,False,verbosity," ".join(args['command'])) for instance in instances
+            delayed(ssh)(instance['InstanceId'],0,[],replaceKey,keyscan,False,verbosity," ".join(args['command'])) for instance in instances
         )
         
     def do_ssh(self,args):

@@ -11,11 +11,14 @@ def describeInstances(ec2Client,InstanceIds):
     return instances
     
 def instanceIdsToPrivateIps(ec2Client,instanceIds):
-    instances = describeInstances(ec2Client,instanceIds)
-    result = {}
-    for instanceId,instance in instances.items():
-        result[instanceId] = []
-        for networkInterface in instance['NetworkInterfaces']:
-            privateIp = networkInterface['PrivateIpAddress']
-            result[instanceId].append(privateIp)
-    return result
+    if instanceIds:
+        instances = describeInstances(ec2Client,instanceIds)
+        result = {}
+        for instanceId,instance in instances.items():
+            result[instanceId] = []
+            for networkInterface in instance['NetworkInterfaces']:
+                privateIp = networkInterface['PrivateIpAddress']
+                result[instanceId].append(privateIp)
+        return result
+    else:
+        return {}

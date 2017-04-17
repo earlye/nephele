@@ -23,6 +23,11 @@ deploy: clean install
 sdist:
 	python setup.py sdist bdist_wheel
 
+.PHONY : test
+test :
+	python setup.py develop
+	python setup.py nosetests -s
+
 .PHONY : build
 build: test sdist
 	python setup.py build
@@ -32,7 +37,3 @@ build: test sdist
 install: build
 	python setup.py install
 
-.PHONY : test
-test :
-	python setup.py develop
-	python setup.py nosetests -s
