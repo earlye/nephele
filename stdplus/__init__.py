@@ -7,6 +7,8 @@ from _run_cmd import *
 from _defaultify import *
 from _isInt import *
 
+import re
+
 __all__ = [
     'defaultify',
     'defaultify',
@@ -16,6 +18,7 @@ __all__ = [
     'fnmatches',
     'getSshHost',
     'isInt',
+    'isIp',
     'keyscanHost',
     'readSshConfig',
     'readfile',
@@ -35,3 +38,6 @@ def contains(small, big):
         else:
             return i, i+len(small)
     return False
+
+def isIp(string):
+    return None != re.match("^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$",string)

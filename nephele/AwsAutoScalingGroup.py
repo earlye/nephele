@@ -17,10 +17,12 @@ class AwsAutoScalingGroup(AwsProcessor):
     def do_printInstances(self,args):
         """Print the list of instances in this auto scaling group. printInstances -h for detailed help"""
         parser = CommandArgumentParser("stack")
+        parser.add_argument(dest='filters',nargs='*',default=["*"],help='Filter instances');
         parser.add_argument('-a','--addresses',action='store_true',dest='addresses',help='list all ip addresses');
         parser.add_argument('-r','--refresh',action='store_true',dest='refresh',help='refresh');
         args = vars(parser.parse_args(args))
-
+        filters = args['filters']
+        
         client = AwsConnectionFactory.getEc2Client()
 
         if args['refresh']:
@@ -30,6 +32,8 @@ class AwsAutoScalingGroup(AwsProcessor):
         print "=== Instances ==="
         instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
 
+        instances = filter( lambda x: fnmatches(x['InstanceId'],filters),instances)
+        
         index = 0
         for instance in instances:
             print "* {0:3d} {1} {2} {3}".format(index,instance['HealthStatus'],instance['AvailabilityZone'],instance['InstanceId'])

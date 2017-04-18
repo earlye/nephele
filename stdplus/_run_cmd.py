@@ -37,7 +37,7 @@ def run(command,echoCommand=True):
         sys.stdout.flush()
     result = os.system(command)
     if 0 != result:
-        raise Exception("Command '{}' failed".format(command))
+        raise Exception("Command '{}' failed with status {}".format(command,result))
         
 def run_cmd(args,throwOnNonZero = True,echoCommand=True,echoStdout=False,echoStderr=True):
     """ Run a command and capture its output. Optionally raise exception on non-zero status """

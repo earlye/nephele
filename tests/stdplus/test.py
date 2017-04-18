@@ -23,3 +23,19 @@ def test_parseSshConfig():
 
 def test_readSshConfig():
     result = readSshConfig()
+
+def test_isIp():
+    assert(not isIp( "Obviously not an ip" )) # obvious
+    assert(not isIp( "16" )) # obvious
+    assert(not isIp( "1234.123.123.123" )) # first octet is too long
+    assert(not isIp( "123.1234.123.123" )) # second octet is too long
+    assert(not isIp( "123.123.1234.123" )) # third octet is too long
+    assert(not isIp( "123.123.123.1234" )) # fourth octet is too long
+    assert(not isIp( "12a.123.123.123" )) # first octet contains alpha
+    assert(not isIp( "123.12a.123.123" )) # second octet contains alpha
+    assert(not isIp( "123.123.12a.123" )) # third octet contains alpha
+    assert(not isIp( "123.123.123.12a" )) # fourth octet contains alpha
+    assert(not isIp( "192.168.1.1.32" )) # too many octets
+    assert(not isIp( "foo.192.168.1.1" )) # too many octets, leading octet not even a number
+    assert(isIp( "8.8.8.8" )) # all octets single digits
+    assert(isIp( "192.168.100.200" )) # all octets 3 digits

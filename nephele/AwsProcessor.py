@@ -8,54 +8,61 @@ from stdplus import *
 import cmd
 import json
 import os
+import re
 import signal
 import sys
 import traceback
 from botocore.exceptions import ClientError
 from pprint import pprint
 
-def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None):
-    client = AwsConnectionFactory.getEc2Client()
-    response = client.describe_instances(InstanceIds=[instanceId])
-    networkInterfaces = response['Reservations'][0]['Instances'][0]['NetworkInterfaces'];
-    if None == interfaceNumber:
-        number = 0
-        for interface in networkInterfaces:
-            print "{0:3d} {1}".format(number,interface['PrivateIpAddress'])
-            number += 1
-    else:
-        address = "{}".format(networkInterfaces[interfaceNumber]['PrivateIpAddress'])
-        if replaceKey or keyscan:
-            resetKnownHost(address)
+def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,command=None): 
+    if replaceKey or keyscan:
+        resetKnownHost(address)
 
-        if keyscan:
-            keyscanHost(address)
+    if keyscan:
+        keyscanHost(address)
 
-        args=["/usr/bin/ssh",address]
-        if not forwarding == None:
-            for forwardInfo in forwarding:
-                if isInt(forwardInfo):
-                    forwardInfo = "{0}:localhost:{0}".format(forwardInfo)
-                args.extend(["-L",forwardInfo])
-            if background:
-                args.extend(["-N","-n"])
-        else:
-            background = False # Background is ignored if not forwarding
-
-        if verbosity > 0:
-            args.append("-" + "v" * verbosity)
-
-        if command:
-            args.append(command)
-
-        print " ".join(args)
-        pid = fexecvp(args)
+    args=["/usr/bin/ssh",address]
+    if not forwarding == None:
+        for forwardInfo in forwarding:
+            if isInt(forwardInfo):
+                forwardInfo = "{0}:localhost:{0}".format(forwardInfo)
+            args.extend(["-L",forwardInfo])
         if background:
-            print "SSH Started in background. pid:{}".format(pid)
-            AwsProcessor.backgroundTasks.append(pid)
-        else:
-            os.waitpid(pid,0)
+            args.extend(["-N","-n"])
+    else:
+        background = False # Background is ignored if not forwarding
 
+    if verbosity > 0:
+        args.append("-" + "v" * verbosity)
+
+    if command:
+        args.append(command)
+
+    print " ".join(args)
+    pid = fexecvp(args)
+    if background:
+        print "SSH Started in background. pid:{}".format(pid)
+        AwsProcessor.backgroundTasks.append(pid)
+    else:
+        os.waitpid(pid,0)
+   
+
+def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None):
+    if isIp(instanceId):
+        sshAddress(instanceId,forwarding,replaceKey,keyscan,background,verbosity,command)
+    else:
+        client = AwsConnectionFactory.getEc2Client()
+        response = client.describe_instances(InstanceIds=[instanceId])
+        networkInterfaces = response['Reservations'][0]['Instances'][0]['NetworkInterfaces'];
+        if None == interfaceNumber:
+            number = 0
+            for interface in networkInterfaces:
+                print "{0:3d} {1}".format(number,interface['PrivateIpAddress'])
+                number += 1
+        else:
+            address = "{}".format(networkInterfaces[interfaceNumber]['PrivateIpAddress'])
+            sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity,command)
 
 class AwsProcessor(cmd.Cmd):
     backgroundTasks=[]
@@ -200,7 +207,7 @@ class AwsProcessor(cmd.Cmd):
     def do_ssh(self,args):
         """SSH to an instance. ssh -h for detailed help."""
         parser = CommandArgumentParser()
-        parser.add_argument(dest='instance-id',help='instance id of the instance to ssh to')
+        parser.add_argument(dest='id',help='identifier of the instance to ssh to [aws instance-id or ip address]')
         parser.add_argument('-a','--interface-number',dest='interface-number',default='0',help='instance id of the instance to ssh to')
         parser.add_argument('-L',dest='forwarding',nargs='*',help="port forwarding string: {localport}:{host-visible-to-instance}:{remoteport} or {port}")
         parser.add_argument('-R','--replace-key',dest='replaceKey',default=False,action='store_true',help="Replace the host's key. This is useful when AWS recycles an IP address you've seen before.")
@@ -209,12 +216,12 @@ class AwsProcessor(cmd.Cmd):
         parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');
         args = vars(parser.parse_args(args))
 
-        instanceId = args['instance-id']
+        targetId = args['id']
         interfaceNumber = int(args['interface-number'])
         forwarding = args['forwarding']
         replaceKey = args['replaceKey']
         keyscan = args['keyscan']
         background = args['background']
         verbosity = args['verbosity']
-        ssh(instanceId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity)
+        ssh(targetId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity)
 
