@@ -191,6 +191,8 @@ class AwsProcessor(cmd.Cmd):
         elif "AWS::EC2::NetworkInterface" == stackResource.resource_type:
             eniId = stackResource.physical_resource_id
             AwsProcessor.processorFactory.Eni(eniId,self).cmdloop()
+        elif "AWS::Logs::LogGroup" == stackResource.resource_type:
+            AwsProcessor.processorFactory.LogGroup(stackResource,self).cmdloop()
         else:
             pprint(stackResource)
             print("- description:{}".format(stackResource.description))

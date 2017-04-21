@@ -1,4 +1,5 @@
 import AwsAutoScalingGroup
+import AwsLogGroup
 import AwsStack
 import AwsEni
 
@@ -15,3 +16,6 @@ class AwsProcessorFactoryImpl:
         reload(AwsStack)
         return AwsStack.AwsStack(stack,logicalName,parent)
     
+    def LogGroup(self,logGroupId,parent):
+        reload(AwsLogGroup)
+        return AwsLogGroup.AwsLogGroup(logGroupId,parent)

@@ -183,3 +183,12 @@ that last bit was obvious :-D
 
 * Renamed from aws-shell to nephele (after the mythological cloud
   nymph), and got the tool to be installable via pip.
+
+* You can now run a command across the instances in an auto scaling
+  group. Navigate to the group and use the `run` command.
+
+* Cloudwatch logging support has commenced. It's very rudimentary
+  so far - you can see log groups inside stacks, select them
+  using the logGroup command, and see that there are streams present.
+  The output is not beautified yet, and you can't actually see
+  the content of those streams yet. Soon.

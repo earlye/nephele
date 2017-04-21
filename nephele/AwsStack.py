@@ -160,6 +160,22 @@ class AwsStack(AwsProcessor):
         pprint(eniSummary)
         self.stackResource(eniSummary.stack_name,eniSummary.logical_id)
 
+    def do_logGroup(self,args):
+        """Go to the specified log group. logGroup -h for detailed help"""
+        parser = CommandArgumentParser("logGroup")
+        parser.add_argument(dest='logGroup',help='logGroup index or name');
+        args = vars(parser.parse_args(args))
+
+        print "loading log group {}".format(args['logGroup'])
+        try:
+            index = int(args['logGroup'])
+            logGroup = self.wrappedStack['resourcesByTypeIndex']['AWS::Logs::LogGroup'][index]
+        except:
+            logGroup = self.wrappedStack['resourcesByTypeName']['AWS::Logs::LogGroup'][args['logGroup']]
+
+        print "logGroup:{}".format(logGroup)
+        self.stackResource(logGroup.stack_name,logGroup.logical_id)
+        
     def do_stack(self,args):
         """Go to the specified stack. stack -h for detailed help."""
         parser = CommandArgumentParser("stack")

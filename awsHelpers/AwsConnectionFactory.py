@@ -137,6 +137,13 @@ class AwsConnectionFactory:
     def getS3Client(self):
         return self.getSession().client('s3')
 
+    @staticmethod
+    def getLogClient():
+        return AwsConnectionFactory.instance._getLogClient()
+
+    def _getLogClient(self):
+        return self.getSession().client('logs')
+
     def getS3Resource(self):
         return self.getSession().resource('s3')
     
