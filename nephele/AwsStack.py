@@ -175,6 +175,23 @@ class AwsStack(AwsProcessor):
 
         print "logGroup:{}".format(logGroup)
         self.stackResource(logGroup.stack_name,logGroup.logical_id)
+
+    def do_role(self,args):
+        """Go to the specified log group. role -h for detailed help"""
+        parser = CommandArgumentParser("role")
+        parser.add_argument(dest='role',help='role index or name');
+        args = vars(parser.parse_args(args))
+
+        print "loading role {}".format(args['role'])
+        try:
+            index = int(args['role'])
+            role = self.wrappedStack['resourcesByTypeIndex']['AWS::IAM::Role'][index]
+        except:
+            role = self.wrappedStack['resourcesByTypeName']['AWS::IAM::Role'][args['role']]
+
+        print "role:{}".format(role)
+        self.stackResource(role.stack_name,role.logical_id)
+
         
     def do_stack(self,args):
         """Go to the specified stack. stack -h for detailed help."""

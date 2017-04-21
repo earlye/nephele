@@ -189,6 +189,13 @@ that last bit was obvious :-D
 
 * Cloudwatch logging support has commenced. It's very rudimentary
   so far - you can see log groups inside stacks, select them
-  using the logGroup command, and see that there are streams present.
+  using the `logGroup` command, and see that there are streams present.
   The output is not beautified yet, and you can't actually see
   the content of those streams yet. Soon.
+
+* IAM role support has commenced, too. It's also very rudimentary so
+  far. You can see roles inside cloudformation stacks, down to the
+  policy document level using the `role`. The output is not beautified yet
+  and it's purely read-only. I don't anticipate beautifying it, because
+  pprint() is good enough for me, but I certainly welcome patches if
+  it matters to you.

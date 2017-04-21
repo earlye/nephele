@@ -134,6 +134,14 @@ class AwsConnectionFactory:
     def getEc2Resource(self):
         return self.getSession().resource('ec2')
 
+    @staticmethod
+    def getIamClient():
+        return AwsConnectionFactory.instance._getIamClient()
+    
+    def _getIamClient(self):
+        return self.getSession().client('iam')
+
+    
     def getS3Client(self):
         return self.getSession().client('s3')
 

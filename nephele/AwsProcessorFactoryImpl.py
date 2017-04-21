@@ -1,5 +1,6 @@
 import AwsAutoScalingGroup
 import AwsLogGroup
+import AwsRole
 import AwsStack
 import AwsEni
 
@@ -19,3 +20,7 @@ class AwsProcessorFactoryImpl:
     def LogGroup(self,logGroupId,parent):
         reload(AwsLogGroup)
         return AwsLogGroup.AwsLogGroup(logGroupId,parent)
+
+    def Role(self,roleId,parent):
+        reload(AwsRole)
+        return AwsRole.AwsRole(roleId,parent)
