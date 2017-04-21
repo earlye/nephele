@@ -209,6 +209,8 @@ class AwsProcessor(cmd.Cmd):
                 print("- stack_id:{}".format(stackResource.stack_id))
         except SilentException, e:
             raise e
+        except SlashException, e:
+            raise e
         except Exception, e:
             print "Exception: {}".format(e)
             traceback.print_exc()
