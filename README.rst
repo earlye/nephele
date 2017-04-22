@@ -199,3 +199,12 @@ that last bit was obvious :-D
   and it's purely read-only. I don't anticipate beautifying it, because
   pprint() is good enough for me, but I certainly welcome patches if
   it matters to you.
+
+* Cloudwatch logging support continues with the addition of the
+  `logStream` command, which is available from inside a `logGroup`.
+  Right now you can tail the logs, and they aren't beautified.
+  As I get more comfortable with the log-scanning API, I plan to add
+  some cross-stream log viewing at the `logGroup` level, probably
+  in the form of a grep-like capability. No promises, of course,
+  just logging where my head's at.
+

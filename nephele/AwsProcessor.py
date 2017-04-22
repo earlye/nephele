@@ -68,7 +68,8 @@ class AwsProcessor(cmd.Cmd):
     backgroundTasks=[]
     resourceTypeAliases={ 'AWS::AutoScaling::AutoScalingGroup' : 'asg',
                           'AWS::CloudFormation::Stack' : 'stack',
-                          'AWS::EC2::NetworkInterface' : 'eni' }
+                          'AWS::EC2::NetworkInterface' : 'eni',
+                          'AWS::Logs::LogGroup' : 'logGroup' }
     processorFactory = None
     
     def __init__(self,prompt,parent):
@@ -175,38 +176,9 @@ class AwsProcessor(cmd.Cmd):
         """Exit cf-ui"""
         raise SystemExit
 
-    def stackResource(self,stackName,logicalId):
-        print "loading stack resource {}.{}".format(stackName,logicalId)
+    def childLoop(self,child):
         try:
-            stackResource = AwsConnectionFactory.instance.getCfResource().StackResource(stackName,logicalId)
-            pprint(stackResource)
-            if "AWS::CloudFormation::Stack" == stackResource.resource_type:
-                pprint(stackResource)
-                print "Found a stack w/ physical id:{}".format(stackResource.physical_resource_id)
-                childStack = AwsConnectionFactory.instance.getCfResource().Stack(stackResource.physical_resource_id)
-                print "Creating prompt"
-                AwsProcessor.processorFactory.Stack(childStack,logicalId,self).cmdloop()
-            elif "AWS::AutoScaling::AutoScalingGroup" == stackResource.resource_type:
-                scalingGroup = stackResource.physical_resource_id
-                AwsProcessor.processorFactory.AutoScalingGroup(scalingGroup,self).cmdloop()
-            elif "AWS::EC2::NetworkInterface" == stackResource.resource_type:
-                eniId = stackResource.physical_resource_id
-                AwsProcessor.processorFactory.Eni(eniId,self).cmdloop()
-            elif "AWS::Logs::LogGroup" == stackResource.resource_type:
-                AwsProcessor.processorFactory.LogGroup(stackResource,self).cmdloop()
-            elif "AWS::IAM::Role" == stackResource.resource_type:
-                AwsProcessor.processorFactory.Role(stackResource,self).cmdloop()
-            else:
-                pprint(stackResource)
-                print("- description:{}".format(stackResource.description))
-                print("- last_updated_timestamp:{}".format(stackResource.last_updated_timestamp))
-                print("- logical_resource_id:{}".format(stackResource.logical_resource_id))
-                print("- metadata:{}".format(stackResource.metadata.strip()))
-                print("- physical_resource_id:{}".format(stackResource.physical_resource_id))
-                print("- resource_status:{}".format(stackResource.resource_status))
-                print("- resource_status_reason:{}".format(stackResource.resource_status_reason))
-                print("- resource_type:{}".format(stackResource.resource_type))
-                print("- stack_id:{}".format(stackResource.stack_id))
+            child.cmdloop()
         except SilentException, e:
             raise e
         except SlashException, e:
@@ -214,8 +186,38 @@ class AwsProcessor(cmd.Cmd):
         except Exception, e:
             print "Exception: {}".format(e)
             traceback.print_exc()
-        
 
+    def stackResource(self,stackName,logicalId):
+        print "loading stack resource {}.{}".format(stackName,logicalId)
+        stackResource = AwsConnectionFactory.instance.getCfResource().StackResource(stackName,logicalId)
+        pprint(stackResource)
+        if "AWS::CloudFormation::Stack" == stackResource.resource_type:
+            pprint(stackResource)
+            print "Found a stack w/ physical id:{}".format(stackResource.physical_resource_id)
+            childStack = AwsConnectionFactory.instance.getCfResource().Stack(stackResource.physical_resource_id)
+            print "Creating prompt"
+            self.childLoop(AwsProcessor.processorFactory.Stack(childStack,logicalId,self))
+        elif "AWS::AutoScaling::AutoScalingGroup" == stackResource.resource_type:
+            scalingGroup = stackResource.physical_resource_id
+            self.childLoop(AwsProcessor.processorFactory.AutoScalingGroup(scalingGroup,self))
+        elif "AWS::EC2::NetworkInterface" == stackResource.resource_type:
+            eniId = stackResource.physical_resource_id
+            self.childLoop(AwsProcessor.processorFactory.Eni(eniId,self))
+        elif "AWS::Logs::LogGroup" == stackResource.resource_type:
+            self.childLoop(AwsProcessor.processorFactory.LogGroup(stackResource,self))
+        elif "AWS::IAM::Role" == stackResource.resource_type:
+            self.childLoop(AwsProcessor.processorFactory.Role(stackResource,self))
+        else:
+            pprint(stackResource)
+            print("- description:{}".format(stackResource.description))
+            print("- last_updated_timestamp:{}".format(stackResource.last_updated_timestamp))
+            print("- logical_resource_id:{}".format(stackResource.logical_resource_id))
+            print("- metadata:{}".format(stackResource.metadata.strip()))
+            print("- physical_resource_id:{}".format(stackResource.physical_resource_id))
+            print("- resource_status:{}".format(stackResource.resource_status))
+            print("- resource_status_reason:{}".format(stackResource.resource_status_reason))
+            print("- resource_type:{}".format(stackResource.resource_type))
+            print("- stack_id:{}".format(stackResource.stack_id))
 
     def do_ssh(self,args):
         """SSH to an instance. ssh -h for detailed help."""
