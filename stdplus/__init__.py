@@ -10,6 +10,7 @@ from _isInt import *
 import re
 
 __all__ = [
+    'contains',
     'defaultify',
     'defaultify',
     'defaultifyDict',

@@ -4,7 +4,7 @@ def getInstanceIds(asgClient,asgName):
         instances = asgDescription['AutoScalingGroups'][0]['Instances']
         instanceIds = []
         for instance in instances:
-            instanceIds.add(instance['InstanceId'])
+            instanceIds.append(instance['InstanceId'])
         return instanceIds
     else:
         return []    
