@@ -229,7 +229,6 @@ class AwsStack(AwsProcessor):
         values = []        
         for output in outputs:
             values.append(self.getWrappedItem('outputs',output).resource_status)
-        pprint(values)
         return values
 
     def do_copy(self,args):
@@ -238,8 +237,19 @@ class AwsStack(AwsProcessor):
         parser.add_argument('-a','--asg',dest='asg',nargs='+',required=False,default=[],help='Copy specified ASG info.')
         parser.add_argument('-o','--output',dest='output',nargs='+',required=False,default=[],help='Copy specified output info.')        
         args = vars(parser.parse_args(args))
+        values = []
         if args['output']:
-            pyperclip.copy("\n".join(self.getOutputs(args['output'])))
+            values.extend(self.getOutputs(args['output']))
+        if args['asg']:
+            for asg in args['asg']:
+                try:
+                    index = int(asg)
+                    asgSummary = self.wrappedStack['resourcesByTypeIndex']['AWS::AutoScaling::AutoScalingGroup'][index]
+                except:
+                    asgSummary = self.wrappedStack['resourcesByTypeName']['AWS::AutoScaling::AutoScalingGroup'][asg]
+                values.append(asgSummary.physical_resource_id)
+        print("values:{}".format(values))
+        pyperclip.copy("\n".join(values))
 
     def do_stacks(self,args):
         """Same as print -r --include stack"""

@@ -208,3 +208,9 @@ that last bit was obvious :-D
   in the form of a grep-like capability. No promises, of course,
   just logging where my head's at.
 
+* In an autoscaling group, the `printInstances` command has two new
+  options: `-t` to print the list of tags, and `-d` to print all the
+  node's details.
+
+* In a stack, the `copy` command now knows how to copy an asg's id
+  to the clipboard.

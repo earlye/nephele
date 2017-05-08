@@ -19,16 +19,22 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser = CommandArgumentParser("stack")
         parser.add_argument(dest='filters',nargs='*',default=["*"],help='Filter instances');
         parser.add_argument('-a','--addresses',action='store_true',dest='addresses',help='list all ip addresses');
+        parser.add_argument('-t','--tags',action='store_true',dest='tags',help='list all instance tags');
+        parser.add_argument('-d','--allDetails',action='store_true',dest='details',help='print all instance details');
         parser.add_argument('-r','--refresh',action='store_true',dest='refresh',help='refresh');
         args = vars(parser.parse_args(args))
         filters = args['filters']
         
         client = AwsConnectionFactory.getEc2Client()
+        addresses = args['addresses']
+        tags = args['tags']
+        details = args['details']
+        needDescription = addresses or tags or details
 
         if args['refresh']:
             self.scalingGroupDescription = self.client.describe_auto_scaling_groups(AutoScalingGroupNames=[self.scalingGroup])
         
-        print "AutoScaling Group:{}".format(self.scalingGroup)
+        # print "AutoScaling Group:{}".format(self.scalingGroup)
         print "=== Instances ==="
         instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
 
@@ -37,14 +43,24 @@ class AwsAutoScalingGroup(AwsProcessor):
         index = 0
         for instance in instances:
             print "* {0:3d} {1} {2} {3}".format(index,instance['HealthStatus'],instance['AvailabilityZone'],instance['InstanceId'])
-            if args['addresses']:
-                response = client.describe_instances(InstanceIds=[instance['InstanceId']])
-                networkInterfaces = response['Reservations'][0]['Instances'][0]['NetworkInterfaces']
+            description = None
+            if needDescription:
+                description = client.describe_instances(InstanceIds=[instance['InstanceId']])
+            if addresses:
+                networkInterfaces = description['Reservations'][0]['Instances'][0]['NetworkInterfaces']
                 number = 0
-                print "  Network Interfaces:"
+                print "      Network Interfaces:"
                 for interface in networkInterfaces:
-                    print "    * {0:3d} {1}".format(number, interface['PrivateIpAddress'])
-                    number +=1                
+                    print "         * {0:3d} {1}".format(number, interface['PrivateIpAddress'])
+                    number +=1
+            if tags:
+                tags = description['Reservations'][0]['Instances'][0]['Tags']
+                print "      Tags:"
+                for tag in tags:
+                    print "        * {0} {1}".format(tag['Key'],tag['Value'])
+            if details:
+                pprint(description)
+                
             index += 1
 
     def do_rebootInstance(self,args):
