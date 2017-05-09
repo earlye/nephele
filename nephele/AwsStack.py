@@ -23,6 +23,14 @@ class WrappedOutput:
         self.logical_id = output['OutputKey']
         self.resource_status = output['OutputValue']
         self.resource_status_reason = defaultifyDict(output,'Description','')
+
+class WrappedParameter:
+    def __init__(self,parameter):
+        # pprint(output)
+        self.parameter = parameter
+        self.logical_id = parameter['ParameterKey']
+        self.resource_status = parameter['ParameterValue']
+        self.resource_status_reason = defaultifyDict(parameter,'Description','')
         
 class AwsStack(AwsProcessor):
     def __init__(self,stack,logicalName,parent):
@@ -40,9 +48,18 @@ class AwsStack(AwsProcessor):
                 i = i + 1
         return events;
 
+    def wrapStackParameters(self,stack):
+        parameters = {}
+        i = 0
+        if None != stack.parameters:
+            for parameter in iter(sorted(stack.parameters)):
+                parameters[i] = WrappedParameter(parameter)
+                i = i + 1
+        return parameters
+
     def wrapStackOutputs(self,stack):
         outputs = {}
-        i = 0;
+        i = 0
         if None != stack.outputs:
             for output in stack.outputs:
                 outputs[i] = WrappedOutput(output)
@@ -61,6 +78,7 @@ class AwsStack(AwsProcessor):
 
         resourcesByType['events'] = self.wrapStackEvents(stack)
         resourcesByType['outputs'] = self.wrapStackOutputs(stack)
+        resourcesByType['parameters'] = self.wrapStackParameters(stack)
 
         result['resourcesByTypeName'] = resourcesByType;
 
@@ -90,12 +108,14 @@ class AwsStack(AwsProcessor):
                 resourceStatusReasonWidth = 1
                 for index, resource in resources.items():
                     logicalIdWidth = max(logicalIdWidth,len(resource.logical_id))
-                    resourceStatusWidth = max(resourceStatusWidth,len(resource.resource_status))
-                    resourceStatusReasonWidth = max(resourceStatusReasonWidth,len(defaultify(resource.resource_status_reason,'')))
+                    resourceStatusWidth = min(50,max(resourceStatusWidth,len(resource.resource_status)))
+                    resourceStatusReasonWidth = min(50,max(resourceStatusReasonWidth,len(defaultify(resource.resource_status_reason,''))))
                 frm = "    {{0:3d}}: {{1:{0}}} {{2:{1}}} {{3}}".format(logicalIdWidth,resourceStatusWidth)
                 for index, resource in resources.items():
                     if fnmatches(resource.logical_id.lower(),filters):
-                        print frm.format(index,resource.logical_id,resource.resource_status,defaultify(resource.resource_status_reason,''))
+                        print frm.format(index,resource.logical_id,
+                                         elipsifyMiddle(repr(resource.resource_status),50),
+                                         elipsifyMiddle(repr(defaultify(resource.resource_status_reason,'')),50))
 
     def do_browse(self,args):
         """Open the current stack in a browser."""

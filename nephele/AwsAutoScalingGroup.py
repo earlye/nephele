@@ -11,21 +11,48 @@ class AwsAutoScalingGroup(AwsProcessor):
         AwsProcessor.__init__(self,parent.raw_prompt + "/asg:" + scalingGroup,parent)
         self.client = AwsConnectionFactory.getAsgClient()
         self.scalingGroup = scalingGroup
-        
+        self.activities = None
         self.do_printInstances('-r')
+
+    def do_printActivities(self,args):
+        """Print scaling activities"""
+        parser = CommandArgumentParser("printActivities")
+        parser.add_argument('-r','--refresh',action='store_true',dest='refresh',help='refresh');
+        args = vars(parser.parse_args(args))
+        refresh = args['refresh'] or not self.activities
+
+        if refresh:
+            response = self.client.describe_scaling_activities(AutoScalingGroupName=self.scalingGroup)
+            self.activities = response['Activities']
+        
+        index = 0
+        for activity in self.activities:
+            print "{}: {} -> {} {}: {}".format(index,activity['StartTime'],activity['EndTime'],activity['StatusCode'],activity['Description'])
+            index = index + 1
+
+    def do_printActivity(self,args):
+        """Print scaling activity details"""
+        parser = CommandArgumentParser("printActivity")
+        parser.add_argument(dest='index',type=int,help='refresh');
+        args = vars(parser.parse_args(args))
+        index = args['index']
+
+        activity = self.activities[index]
+        pprint(activity)
         
     def do_printInstances(self,args):
         """Print the list of instances in this auto scaling group. printInstances -h for detailed help"""
-        parser = CommandArgumentParser("stack")
+        parser = CommandArgumentParser("printInstances")
         parser.add_argument(dest='filters',nargs='*',default=["*"],help='Filter instances');
         parser.add_argument('-a','--addresses',action='store_true',dest='addresses',help='list all ip addresses');
         parser.add_argument('-t','--tags',action='store_true',dest='tags',help='list all instance tags');
         parser.add_argument('-d','--allDetails',action='store_true',dest='details',help='print all instance details');
         parser.add_argument('-r','--refresh',action='store_true',dest='refresh',help='refresh');
         args = vars(parser.parse_args(args))
-        filters = args['filters']
         
         client = AwsConnectionFactory.getEc2Client()
+
+        filters = args['filters']
         addresses = args['addresses']
         tags = args['tags']
         details = args['details']
@@ -63,6 +90,15 @@ class AwsAutoScalingGroup(AwsProcessor):
                 
             index += 1
 
+    def do_printPolicy(self,args):
+        """Print the autoscaling policy"""
+        parser = CommandArgumentParser("printPolicy")
+        args = vars(parser.parse_args(args))
+
+        policy = self.client.describe_policies(AutoScalingGroupName=self.scalingGroup)
+        pprint(policy)
+        
+            
     def do_rebootInstance(self,args):
         """Restart specified instance"""
         parser = CommandArgumentParser("rebootInstance")
@@ -100,15 +136,18 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
         parser.add_argument(dest='command',nargs='+',help="Command to run on all hosts.") # consider adding a filter option later
         parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
-        parser.add_argument('-j',dest='jobs',type=int,default=1,help='Number of hosts to contact in parallel');        
+        parser.add_argument('-j',dest='jobs',type=int,default=1,help='Number of hosts to contact in parallel');
+        parser.add_argument('-s',dest='skip',type=int,default=0,help='Skip this many hosts');
         args = vars(parser.parse_args(args))
 
         replaceKey = args['replaceKey']
         keyscan = args['keyscan']
         verbosity = args['verbosity']
         jobs = args['jobs']
+        skip = args['skip']
 
         instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
+        instances = instances[skip:]
         # if replaceKey or keyscan:
         #     for instance in instances:
         #         stdplus.resetKnownHost(instance)

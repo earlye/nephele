@@ -123,6 +123,9 @@ _Most Recent Last._
 Doesn't include bug fixes, or any features I forgot to list. Maybe
 that last bit was obvious :-D
 
+Yes, you could figure this all out by looking at commit logs. Why would
+I make you go through that?
+
 * You can now input an MFA token by running `mfa {token}`. It's
   rudimentary support at this point, and likely broken if you've never
   used [aws-mfa](https://github.com/lonelyplanet/aws-mfa) before.
@@ -214,3 +217,17 @@ that last bit was obvious :-D
 
 * In a stack, the `copy` command now knows how to copy an asg's id
   to the clipboard.
+
+* ASG's now support the `printActivities` and `printActivity` commands
+  to assist in debugging changes initiated by autoscaling.
+
+* ASG's now support showing scaling policies via the `printPolicy`
+  command.
+
+* ASG `run` command supports `-s` option to skip _n_ hosts
+
+* Stacks now display their parameters. These are escaped and "elipsified"
+  in order to fit. Will be adding a command to print a full parameter
+  value at some point.
+
+* stdplus.elipsifyMiddle is now a thing.
