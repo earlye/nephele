@@ -1,7 +1,7 @@
 import AwsLogStream
 
 from AwsProcessor import AwsProcessor
-from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
+from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
 from CommandArgumentParser import CommandArgumentParser
 
 from pprint import pprint

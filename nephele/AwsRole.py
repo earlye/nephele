@@ -1,5 +1,5 @@
 from AwsProcessor import AwsProcessor
-from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
+from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
 
 from pprint import pprint
 

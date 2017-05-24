@@ -1,5 +1,5 @@
 from AwsProcessor import *
-from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
+from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
 from CommandArgumentParser import *
 from joblib import Parallel, delayed
 
@@ -27,7 +27,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         
         index = 0
         for activity in self.activities:
-            print "{}: {} -> {} {}: {}".format(index,activity['StartTime'],activity['EndTime'],activity['StatusCode'],activity['Description'])
+            print "{}: {} -> {} {}: {}".format(index,activity['StartTime'],stdplus.defaultifyDict(activity,'EndTime',''),activity['StatusCode'],activity['Description'])
             index = index + 1
 
     def do_printActivity(self,args):

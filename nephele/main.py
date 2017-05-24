@@ -14,7 +14,7 @@ import sys
 import traceback
 import yaml
 
-from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
+from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
 from AwsProcessor import AwsProcessor
 from AwsProcessorFactoryImpl import AwsProcessorFactoryImpl
 from CommandArgumentParser import CommandArgumentParser        
@@ -184,3 +184,7 @@ def main():
         command_prompt.cmdloop()
     except SilentException:
         pass
+
+if __name__== "__main__":
+    main()
+        

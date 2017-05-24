@@ -2,7 +2,7 @@ import os
 import pyperclip
 
 from AwsProcessor import AwsProcessor
-from awsHelpers.AwsConnectionFactory import AwsConnectionFactory
+from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
 from CommandArgumentParser import CommandArgumentParser
 from stdplus import *
 
@@ -115,7 +115,7 @@ class AwsStack(AwsProcessor):
                     if fnmatches(resource.logical_id.lower(),filters):
                         print frm.format(index,resource.logical_id,
                                          elipsifyMiddle(repr(resource.resource_status),50),
-                                         elipsifyMiddle(repr(defaultify(resource.resource_status_reason,'')),50))
+                                         elipsifyMiddle(repr(defaultify(resource.resource_status_reason,'')),150))
 
     def do_browse(self,args):
         """Open the current stack in a browser."""
@@ -275,3 +275,17 @@ class AwsStack(AwsProcessor):
         """Same as print -r --include stack"""
         self.do_print(args + " -r --include stack" )
 
+    def do_parameter(self,args):
+        """Print a parameter"""
+        parser = CommandArgumentParser("parameter")
+        parser.add_argument(dest="id",help="Parameter to print")
+        args = vars(parser.parse_args(args))
+        
+        print "printing parameter {}".format(args['id'])
+        try:
+            index = int(args['id'])            
+            parameter = self.wrappedStack['resourcesByTypeName']['parameters'][index]
+        except ValueError:
+            parameter = self.wrappedStack['resourcesByTypeName']['parameters'][args['id']]
+
+        print(parameter.resource_status)
