@@ -134,6 +134,8 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser = CommandArgumentParser("run")
         parser.add_argument('-R','--replace-key',dest='replaceKey',default=False,action='store_true',help="Replace the host's key. This is useful when AWS recycles an IP address you've seen before.")
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
+        parser.add_argument('-ii','--ignore-host-key',dest='ignore-host-key',default=False,action='store_true',help='Ignore host key')
+        parser.add_argument('-ne','--no-echo',dest='no-echo',default=False,action='store_true',help='Do not echo command')
         parser.add_argument(dest='command',nargs='+',help="Command to run on all hosts.") # consider adding a filter option later
         parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
         parser.add_argument('-j',dest='jobs',type=int,default=1,help='Number of hosts to contact in parallel');
@@ -145,6 +147,8 @@ class AwsAutoScalingGroup(AwsProcessor):
         verbosity = args['verbosity']
         jobs = args['jobs']
         skip = args['skip']
+        ignoreHostKey = args['ignore-host-key']
+        noEcho = args['no-echo']
 
         instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
         instances = instances[skip:]
@@ -153,7 +157,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         #         stdplus.resetKnownHost(instance)
         
         Parallel(n_jobs=jobs)(
-            delayed(ssh)(instance['InstanceId'],0,[],replaceKey,keyscan,False,verbosity," ".join(args['command'])) for instance in instances
+            delayed(ssh)(instance['InstanceId'],0,[],replaceKey,keyscan,False,verbosity," ".join(args['command']),ignoreHostKey=ignoreHostKey,echoCommand=not noEcho) for instance in instances
         )
         
     def do_ssh(self,args):
@@ -161,6 +165,8 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser = CommandArgumentParser("ssh")
         parser.add_argument(dest='instance',help='instance index or name');
         parser.add_argument('-a','--address-number',default='0',dest='interface-number',help='instance id of the instance to ssh to');
+        parser.add_argument('-ii','--ignore-host-key',dest='ignore-host-key',default=False,action='store_true',help='Ignore host key')
+        parser.add_argument('-ne','--no-echo',dest='no-echo',default=False,action='store_true',help='Do not echo command')
         parser.add_argument('-L',dest='forwarding',nargs='*',help="port forwarding string of the form: {localport}:{host-visible-to-instance}:{remoteport} or {port}")
         parser.add_argument('-R','--replace-key',dest='replaceKey',default=False,action='store_true',help="Replace the host's key. This is useful when AWS recycles an IP address you've seen before.")
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
@@ -174,13 +180,16 @@ class AwsAutoScalingGroup(AwsProcessor):
         keyscan = args['keyscan']
         background = args['background']
         verbosity = args['verbosity']
+        ignoreHostKey = args['ignore-host-key']
+        noEcho = args['no-echo']
+        
         try:
             index = int(args['instance'])
             instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
             instance = instances[index]
-            ssh(instance['InstanceId'],interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity)
+            ssh(instance['InstanceId'],interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity,ignoreHostKey=ignoreHostKey,echoCommand = not noEcho)
         except ValueError:
-            ssh(args['instance'],interfaceNumber,forwarding,replaceKey,keyscan,background)
+            ssh(args['instance'],interfaceNumber,forwarding,replaceKey,keyscan,background,ignoreHostKey=ignoreHostKey,echoCommand = not noEcho)
 
     def do_startInstance(self,args):
         """Start specified instance"""

@@ -15,7 +15,7 @@ import traceback
 from botocore.exceptions import ClientError
 from pprint import pprint
 
-def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,command=None): 
+def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True):
     if replaceKey or keyscan:
         resetKnownHost(address)
 
@@ -23,6 +23,10 @@ def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,comm
         keyscanHost(address)
 
     args=["/usr/bin/ssh",address]
+    if ignoreHostKey:
+        args.extend(["-o","StrictHostKeyChecking=no",
+                     "-o","UpdateHostKeys=yes"])
+        
     if not forwarding == None:
         for forwardInfo in forwarding:
             if isInt(forwardInfo):
@@ -39,7 +43,9 @@ def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,comm
     if command:
         args.append(command)
 
-    print " ".join(args)
+    if echoCommand:
+        print " ".join(args)
+        
     pid = fexecvp(args)
     if background:
         print "SSH Started in background. pid:{}".format(pid)
@@ -48,9 +54,9 @@ def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,comm
         os.waitpid(pid,0)
    
 
-def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None):
+def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True):
     if isIp(instanceId):
-        sshAddress(instanceId,forwarding,replaceKey,keyscan,background,verbosity,command)
+        sshAddress(instanceId,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey)
     else:
         client = AwsConnectionFactory.getEc2Client()
         response = client.describe_instances(InstanceIds=[instanceId])
@@ -62,7 +68,7 @@ def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verb
                 number += 1
         else:
             address = "{}".format(networkInterfaces[interfaceNumber]['PrivateIpAddress'])
-            sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity,command)
+            sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey,echoCommand=echoCommand)
 
 class AwsProcessor(cmd.Cmd):
     backgroundTasks=[]
@@ -224,6 +230,8 @@ class AwsProcessor(cmd.Cmd):
         parser = CommandArgumentParser()
         parser.add_argument(dest='id',help='identifier of the instance to ssh to [aws instance-id or ip address]')
         parser.add_argument('-a','--interface-number',dest='interface-number',default='0',help='instance id of the instance to ssh to')
+        parser.add_argument('-ii','--ignore-host-key',dest='ignore-host-key',default=False,action='store_true',help='Ignore host key')
+        parser.add_argument('-ne','--no-echo',dest='no-echo',default=False,action='store_true',help='Do not echo command')
         parser.add_argument('-L',dest='forwarding',nargs='*',help="port forwarding string: {localport}:{host-visible-to-instance}:{remoteport} or {port}")
         parser.add_argument('-R','--replace-key',dest='replaceKey',default=False,action='store_true',help="Replace the host's key. This is useful when AWS recycles an IP address you've seen before.")
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
@@ -238,5 +246,7 @@ class AwsProcessor(cmd.Cmd):
         keyscan = args['keyscan']
         background = args['background']
         verbosity = args['verbosity']
-        ssh(targetId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity)
+        ignoreHostKey = args['ignore-host-key']
+        noEcho = args['no-echo']
+        ssh(targetId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity, ignoreHostKey=ignoreHostKey, echoCommand = not noEcho)
 
