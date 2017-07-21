@@ -37,7 +37,7 @@ from AwsRoot import AwsRoot
 histfile = os.path.join(os.path.expanduser("~"), ".nephele_hist")
 configFile = os.path.join(os.path.expanduser("~"),".nephele.yaml")
 
-def process():
+def main():
     try:
         argv = sys.argv
         Config.config={}
@@ -55,6 +55,8 @@ def process():
             readline.set_history_length(1000)
         except IOError:
             pass
+        atexit.register(readline.write_history_file, histfile)
+        atexit.register(AwsProcessor.killBackgroundTasks)
         
         AwsProcessor.processorFactory = AwsProcessorFactoryImpl()
 
@@ -69,19 +71,13 @@ def process():
         if None != args['mfa']:
             command_prompt.onecmd("mfa {}".format(args['mfa']))
 
-        command_prompt.onecmd("stacks")
+        command_prompt.onecmd("stacks --summary")
         command_prompt.cmdloop()        
     except SystemExit, e:
         print("exiting...")
         pass
     except SilentException:
         pass
-
-def main():
-    process()
-    AwsProcessor.killBackgroundTasks()
-    print("writing history_file:{}".format(histfile))
-    readline.write_history_file(histfile)
 
 if __name__== "__main__":
     main()

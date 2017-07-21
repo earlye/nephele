@@ -38,11 +38,32 @@ Usage
     $ nephele
     (aws)/: help
 
+Configuration
+=============
+
+Nephele reads `~/.nephele.yaml` during startup. Its format looks like this:
+
+.. code-block::
+
+   profile: {profile-name}
+
+   profiles:
+     {profile-name}:
+       awsProfile: {aws profile name}
+       ssh-jump-host: {jump host name or ip}
+       ssh-jump-user: {jump host username}
+     {profile-name-2}:
+       awsProfile: {aws profile name}
+       ssh-jump-host: {jump host name or ip}
+       ssh-jump-user: {jump host username}
+
+
 SSH support
 ===========
 
-If you've set up your `~/.ssh/config` so that using ssh to connect via an instance's IP
-address will "just work," then this is probably the best part of `nephele`.
+If you've set up your `~/.nephele.yaml` with a correct
+`profiles.{profile}.ssh-bastion` entry, then this is probably the best
+part of `nephele`.
 
 nephele can ssh to an instance without you having to figure out its
 ip, modify /etc/host, or know anything other than its aws instance id:
@@ -98,22 +119,12 @@ It also supports port forwarding!
     $ exit
     (aws)/stack:{stack}/stack:{substack}/asg:{asg}/: ssh 2 -L 8888 # <-- useful shorthand!
 
-So how do you set up your `~/.ssh/config` for this? I don't really
-profess to be an expert, but here's the magic from mine, modified
-to protect my account, of course:
-
-.. code-block:: config
-
-    Host 192.168.* ### Not the actual subnet, obviously - adjust to match your subnet
-       User {host-user}
-       IdentityFile {bastion-identity-path}
-       ProxyCommand ssh -i {host-identity-path} -W %h:%p {bastion-user}@{bastion-host-ip-or-name}
-
-Obviously, `{host-user}`, `{bastion-identity-path}`,
-`{host-identity-path}`, `{bastion-user}`, and
-`{bastion-host-ip-or-name}` will all vary for your AWS setup. I may
-have `{bastion-identity-path}` and `{host-identity-path}`
-swapped. Like I said, not an expert on ssh proxying.
+So how do you set up your `~/.nephele.yaml` for this? It helps if your
+AWS admins have set things up so that using ssh from a command line is
+fairly straightforward. If you need a `-J` option to ssh to connect to
+a host, specify the jump host user and password using
+`profiles.{profile}.ssh-jump-host` and
+`profiles.{profile}.ssh-jump-user`, respectively.
 
 New Features
 ============
@@ -231,3 +242,8 @@ I make you go through that?
   value at some point.
 
 * stdplus.elipsifyMiddle is now a thing.
+
+* ssh commands no longer depend on ~/.ssh/config working, instead
+  supporting ~/.nephele.yaml
+
+* ssh now supports the fantastic -J option

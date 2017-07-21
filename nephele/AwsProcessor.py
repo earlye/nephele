@@ -41,8 +41,11 @@ def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,comm
     if verbosity > 0:
         args.append("-" + "v" * verbosity)
 
-    if 'ssh-bastion' in Config.config['selectedProfile']:
-        args.extend(["-J",Config.config['selectedProfile']['ssh-bastion']])
+    if 'ssh-jump-host' in Config.config['selectedProfile']:
+        if 'ssh-jump-user' in Config.config['selectedProfile']:
+            args.extend(["-J",'{}@{}'.format(Config.config['selectedProfile']['ssh-jump-user'],Config.config['selectedProfile']['ssh-jump-host'])])
+        else:
+            args.extend(["-J",Config.config['selectedProfile']['ssh-jump-host']])
 
     if command:
         args.append(command)
@@ -242,7 +245,7 @@ class AwsProcessor(cmd.Cmd):
 
     def do_ssh(self,args):
         """SSH to an instance. ssh -h for detailed help."""
-        parser = CommandArgumentParser()
+        parser = CommandArgumentParser("ssh")
         parser.add_argument(dest='id',help='identifier of the instance to ssh to [aws instance-id or ip address]')
         parser.add_argument('-a','--interface-number',dest='interface-number',default='0',help='instance id of the instance to ssh to')
         parser.add_argument('-ii','--ignore-host-key',dest='ignore-host-key',default=False,action='store_true',help='Ignore host key')
@@ -265,3 +268,6 @@ class AwsProcessor(cmd.Cmd):
         noEcho = args['no-echo']
         ssh(targetId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity, ignoreHostKey=ignoreHostKey, echoCommand = not noEcho)
 
+    def do_config(self,args):
+        parser = CommandArgumentParser("config")
+        args = vars(parser.parse_args(args))

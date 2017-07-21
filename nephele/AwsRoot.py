@@ -54,10 +54,11 @@ class AwsRoot(AwsProcessor):
     def do_stacks(self,args):
         """List available stacks. stacks -h for detailed help."""
         parser = CommandArgumentParser()
-        parser.add_argument('-s','--silent',dest='silent',action='store_true',help='Run silently');
-        parser.add_argument('-i','--include',nargs='*',dest='includes',default=[],help='Add statuses');
-        parser.add_argument('-e','--exclude',nargs='*',dest='excludes',default=[],help='Remove statuses');
-        parser.add_argument(dest='filters',nargs='*',default=["*"],help='Filter stacks');
+        parser.add_argument('-s','--silent',dest='silent',action='store_true',help='Run silently')
+        parser.add_argument('-i','--include',nargs='*',dest='includes',default=[],help='Add statuses')
+        parser.add_argument('-e','--exclude',nargs='*',dest='excludes',default=[],help='Remove statuses')
+        parser.add_argument('--summary',dest='summary',action='store_true',default=False,help='Show just a summary')
+        parser.add_argument(dest='filters',nargs='*',default=["*"],help='Filter stacks')
         args = vars(parser.parse_args(args))
 
         nextToken = None
@@ -99,9 +100,12 @@ class AwsRoot(AwsProcessor):
             index += 1
 
         self.stackList = stackSummariesByIndex
-        if not args['silent']:
+        if not (args['silent'] or args['summary']):
             for index,summary in stackSummariesByIndex.items():
                 print '{0:3d}: {2:20} {1:40} {3}'.format(summary['Index'],summary['StackName'],summary['StackStatus'],defaultifyDict(summary,'StackStatusReason',''))
+
+        if args['summary'] and not args['silent']:
+            print '{} stacks'.format(len(stackSummariesByIndex))
         
     def do_stack_resource(self, args):
         """Use specified stack resource. stack_resource -h for detailed help."""
