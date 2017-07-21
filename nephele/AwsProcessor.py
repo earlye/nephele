@@ -12,6 +12,7 @@ import re
 import signal
 import sys
 import traceback
+import Config
 from botocore.exceptions import ClientError
 from pprint import pprint
 
@@ -39,6 +40,9 @@ def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,comm
 
     if verbosity > 0:
         args.append("-" + "v" * verbosity)
+
+    if 'ssh-bastion' in Config.config['selectedProfile']:
+        args.extend(["-J",Config.config['selectedProfile']['ssh-bastion']])
 
     if command:
         args.append(command)
@@ -115,16 +119,16 @@ class AwsProcessor(cmd.Cmd):
         except:
             print "Unexpected error:", sys.exc_info()[0]
 
-    def mfa_devices(self, profile='default'):
-        list_mfa_devices_command = ["aws","--profile",profile,"--output","json","iam","list-mfa-devices"]
+    def mfa_devices(self, awsProfile='default'):
+        list_mfa_devices_command = ["aws","--profile",awsProfile,"--output","json","iam","list-mfa-devices"]
         result = run_cmd(list_mfa_devices_command)
         if result.retCode == 0 :
             return json.loads("\n".join(result.stdout))['MFADevices']
         else:
             raise Exception('There was a problem fetching MFA devices from AWS')
             
-    def load_arn_from_aws(self, profile):
-        devices = self.mfa_devices(profile)
+    def load_arn_from_aws(self, awsProfile):
+        devices = self.mfa_devices(awsProfile)
         if len(devices):
             return devices[0]['SerialNumber']
         else:
@@ -134,18 +138,18 @@ class AwsProcessor(cmd.Cmd):
         """Enter a 6-digit MFA token. mfa -h for more details"""
         parser = CommandArgumentParser("mfa")
         parser.add_argument(dest='token',help='MFA token value');
-        parser.add_argument("-p","--profile",dest='profile',default=AwsConnectionFactory.instance.getProfile(),help='MFA token value');
+        parser.add_argument("-p","--profile",dest='awsProfile',default=AwsConnectionFactory.instance.getProfile(),help='MFA token value');
         args = vars(parser.parse_args(args))
 
         token = args['token']
-        profile = args['profile']
-        arn = AwsConnectionFactory.instance.load_arn(profile)
+        awsProfile = args['awsProfile']
+        arn = AwsConnectionFactory.instance.load_arn(awsProfile)
 
-        credentials_command = ["aws","--profile",profile,"--output","json","sts","get-session-token","--serial-number",arn,"--token-code",token]
+        credentials_command = ["aws","--profile",awsProfile,"--output","json","sts","get-session-token","--serial-number",arn,"--token-code",token]
         output = run_cmd(credentials_command) # Throws on non-zero exit :yey:
 
         credentials = json.loads("\n".join(output.stdout))['Credentials']
-        AwsConnectionFactory.instance.setMfaCredentials(credentials,profile)
+        AwsConnectionFactory.instance.setMfaCredentials(credentials,awsProfile)
 
     def do_up(self,args):
         """Go up one level"""
@@ -162,7 +166,7 @@ class AwsProcessor(cmd.Cmd):
             raise SlashException()
 
     def do_profile(self,args):
-        """Select AWS profile"""
+        """Select nephele profile"""
         parser = CommandArgumentParser("profile")
         parser.add_argument(dest="profile",help="Profile name")
         parser.add_argument('-v','--verbose',dest="verbose",action='store_true',help='verbose')
@@ -172,14 +176,25 @@ class AwsProcessor(cmd.Cmd):
         verbose = args['verbose']
         if verbose:
             print "Selecting profile '{}'".format(profile)
-        AwsConnectionFactory.resetInstance(profile=profile)
+
+        selectedProfile = {}
+        if profile in Config.config['profiles']:
+            selectedProfile = Config.config['profiles'][profile]
+
+        selectedProfile['name'] = profile
+        Config.config['selectedProfile'] = selectedProfile
+
+        awsProfile = profile
+        if 'awsProfile' in selectedProfile:
+            awsProfile = selectedProfile['awsProfile']
+        AwsConnectionFactory.resetInstance(profile=awsProfile)
 
     def do_quit(self,args):
         """Alias for 'exit'"""
         return self.do_exit(args)
         
     def do_exit(self,args):
-        """Exit cf-ui"""
+        """Exit nephele"""
         raise SystemExit
 
     def childLoop(self,child):
