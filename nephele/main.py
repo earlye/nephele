@@ -46,10 +46,12 @@ def main():
             Config.config = yaml.load(readfile(configFile))        
 
         parser = CommandArgumentParser(argv[0])
-        parser.add_argument('-p','--profile',dest='profile',default=defaultifyDict(Config.config,'profile','default'),help='select nephele profile');
-        parser.add_argument('-m','--mfa',dest='mfa',help='provide mfa code');
+        parser.add_argument('-p','--profile',dest='profile',default=defaultifyDict(Config.config,'profile','default'),help='select nephele profile')
+        parser.add_argument('-m','--mfa',dest='mfa',help='provide mfa code')
+        parser.add_argument(dest='command',nargs=argparse.REMAINDER)
         args = vars(parser.parse_args(argv[1:]))
 
+        command = args['command']
         try:
             readline.read_history_file(histfile)
             readline.set_history_length(1000)
@@ -71,8 +73,11 @@ def main():
         if None != args['mfa']:
             command_prompt.onecmd("mfa {}".format(args['mfa']))
 
-        command_prompt.onecmd("stacks --summary")
-        command_prompt.cmdloop()        
+        if command:
+            command_prompt.onecmd(" ".join(command))
+        else:
+            command_prompt.onecmd("stacks --summary")
+            command_prompt.cmdloop()        
     except SystemExit, e:
         print("exiting...")
         pass

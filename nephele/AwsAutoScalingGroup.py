@@ -48,6 +48,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-t','--tags',action='store_true',dest='tags',help='list all instance tags');
         parser.add_argument('-d','--allDetails',action='store_true',dest='details',help='print all instance details');
         parser.add_argument('-r','--refresh',action='store_true',dest='refresh',help='refresh');
+        parser.add_argument('-z','--zones',dest='availabilityZones',nargs='+',help='Only include specified availability zones');
         args = vars(parser.parse_args(args))
         
         client = AwsConnectionFactory.getEc2Client()
@@ -56,6 +57,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         addresses = args['addresses']
         tags = args['tags']
         details = args['details']
+        availabilityZones = args['availabilityZones']
         needDescription = addresses or tags or details
 
         if args['refresh']:
@@ -66,6 +68,8 @@ class AwsAutoScalingGroup(AwsProcessor):
         instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
 
         instances = filter( lambda x: fnmatches(x['InstanceId'],filters),instances)
+        if availabilityZones:
+            instances = filter( lambda x: fnmatches(x['AvailabilityZone'],availabilityZones),instances)
         
         index = 0
         for instance in instances:

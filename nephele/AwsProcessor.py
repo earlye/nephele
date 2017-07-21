@@ -270,4 +270,40 @@ class AwsProcessor(cmd.Cmd):
 
     def do_config(self,args):
         parser = CommandArgumentParser("config")
+        subparsers = parser.add_subparsers(help='sub-command help',dest='command')
+        # subparsers.required=
+        subparsers._parser_class = argparse.ArgumentParser # This is to work around `TypeError: __init__() got an unexpected keyword argument 'prog'`
+        
+        parserPrint = subparsers.add_parser('print',help='Print the current configuration')
+        parserPrint.add_argument(dest='keys',nargs='*',help='Key(s) to print')
+        
+        parserSet = subparsers.add_parser('set',help='Set a configuration value')
+        parserSave = subparsers.add_parser('save',help='Save the current configuration')
         args = vars(parser.parse_args(args))
+
+        print("Command:{}".format(args['command']))
+        { 'print' : AwsProcessor.do_configPrint,
+          'set' : AwsProcessor.do_configSet,
+          'save' : AwsProcessor.do_configSave }[args['command']]( self, args )
+
+    def do_configPrint(self,args):
+        if not args['keys']:
+            print("Current configuration:{}".format(Config.config))
+        else:
+            for key in args['keys']:
+                subkeys = key.split('.')
+                entry = Config.config
+                for subkey in subkeys:
+                    if subkey in entry:
+                        entry = entry[subkey]
+                    else:
+                        entry = None
+                print "{}: {}".format(key,entry)
+
+    def do_configSet(self,args):
+        print("Set configuration:{}".format(args))
+        
+    def do_configSave(self,args):
+        print("Save configuration:{}".format(args))
+
+        
