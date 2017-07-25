@@ -65,7 +65,7 @@ SSH support
 ===========
 
 If you've set up your `~/.nephele.yaml` with a correct
-`profiles.{profile}.ssh-bastion` entry, then this is probably the best
+`profiles.{profile}.ssh-jump-host` entry, then this is probably the best
 part of `nephele`.
 
 nephele can ssh to an instance without you having to figure out its
