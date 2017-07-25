@@ -5,6 +5,7 @@ from joblib import Parallel, delayed
 
 import boto3
 import stdplus
+import Config
 
 class AwsAutoScalingGroup(AwsProcessor):
     def __init__(self,scalingGroup,parent):
@@ -73,6 +74,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         
         index = 0
         for instance in instances:
+            instance['index'] = index
             print "* {0:3d} {1} {2} {3}".format(index,instance['HealthStatus'],instance['AvailabilityZone'],instance['InstanceId'])
             description = None
             if needDescription:
@@ -144,6 +146,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
         parser.add_argument('-j',dest='jobs',type=int,default=1,help='Number of hosts to contact in parallel');
         parser.add_argument('-s',dest='skip',type=int,default=0,help='Skip this many hosts');
+        parser.add_argument('-m',dest='macro',default=False,action='store_true',help='{command} is a series of macros to execute, not the actual command to run on the host');
         args = vars(parser.parse_args(args))
 
         replaceKey = args['replaceKey']
@@ -159,9 +162,20 @@ class AwsAutoScalingGroup(AwsProcessor):
         # if replaceKey or keyscan:
         #     for instance in instances:
         #         stdplus.resetKnownHost(instance)
-        
+
+        if args['macro']:
+            if len(args['command']) > 1:
+                print("Only one macro may be specified with the -m switch.")
+                return
+            else:
+                macro = args['command'][0]
+                print("Macro:{}".format(macro))
+                command = Config.config['ssh-macros'][macro]
+        else:
+            command = ' '.join(args['command'])
+            
         Parallel(n_jobs=jobs)(
-            delayed(ssh)(instance['InstanceId'],0,[],replaceKey,keyscan,False,verbosity," ".join(args['command']),ignoreHostKey=ignoreHostKey,echoCommand=not noEcho) for instance in instances
+            delayed(ssh)(instance['InstanceId'],0,[],replaceKey,keyscan,False,verbosity,command,ignoreHostKey=ignoreHostKey,echoCommand=not noEcho,name="{}:{}: ".format(instance['index'],instance['InstanceId'])) for instance in instances
         )
         
     def do_ssh(self,args):
@@ -176,6 +190,8 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
         parser.add_argument('-B','--background',dest='background',default=False,action='store_true',help="Run in the background. (e.g., forward an ssh session and then do other stuff in aws-shell).")
         parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
+        parser.add_argument('-m',dest='macro',default=False,action='store_true',help='{command} is a series of macros to execute, not the actual command to run on the host');
+        parser.add_argument(dest='command',nargs='*',help="Command to run on all hosts.") # consider adding a filter option later
         args = vars(parser.parse_args(args))
 
         interfaceNumber = int(args['interface-number'])
@@ -186,14 +202,29 @@ class AwsAutoScalingGroup(AwsProcessor):
         verbosity = args['verbosity']
         ignoreHostKey = args['ignore-host-key']
         noEcho = args['no-echo']
-        
+
+        # Figure out the host to connect to:
+        target = args['instance']
         try:
             index = int(args['instance'])
             instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
             instance = instances[index]
-            ssh(instance['InstanceId'],interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity,ignoreHostKey=ignoreHostKey,echoCommand = not noEcho)
-        except ValueError:
-            ssh(args['instance'],interfaceNumber,forwarding,replaceKey,keyscan,background,ignoreHostKey=ignoreHostKey,echoCommand = not noEcho)
+            target = instance['InstanceId']
+        except ValueError: # if args['instance'] is not an int, for example.
+            pass
+        
+        if args['macro']:
+            if len(args['command']) > 1:
+                print("Only one macro may be specified with the -m switch.")
+                return
+            else:
+                macro = args['command'][0]
+                print("Macro:{}".format(macro))
+                command = Config.config['ssh-macros'][macro]
+        else:
+            command = ' '.join(args['command'])
+            
+        ssh(target,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey,echoCommand = not noEcho)
 
     def do_startInstance(self,args):
         """Start specified instance"""

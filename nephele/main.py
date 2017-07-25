@@ -35,19 +35,17 @@ from AwsRoot import AwsRoot
 
 
 histfile = os.path.join(os.path.expanduser("~"), ".nephele_hist")
-configFile = os.path.join(os.path.expanduser("~"),".nephele.yaml")
 
 def main():
     try:
         argv = sys.argv
-        Config.config={}
-        if os.path.exists(configFile):
-            print "Loading config:{}".format(configFile)
-            Config.config = yaml.load(readfile(configFile))        
+
+        Config.loadConfig()
 
         parser = CommandArgumentParser(argv[0])
         parser.add_argument('-p','--profile',dest='profile',default=defaultifyDict(Config.config,'profile','default'),help='select nephele profile')
         parser.add_argument('-m','--mfa',dest='mfa',help='provide mfa code')
+        parser.add_argument('-c','--continue',dest='continue',action='store_true',default=False,help='continue after executing `command`')
         parser.add_argument(dest='command',nargs=argparse.REMAINDER)
         args = vars(parser.parse_args(argv[1:]))
 
@@ -73,11 +71,16 @@ def main():
         if None != args['mfa']:
             command_prompt.onecmd("mfa {}".format(args['mfa']))
 
+        cmdloop = True
         if command:
             command_prompt.onecmd(" ".join(command))
+            cmdloop = args['continue']
         else:
             command_prompt.onecmd("stacks --summary")
-            command_prompt.cmdloop()        
+
+        if cmdloop:
+            command_prompt.cmdloop()
+        
     except SystemExit, e:
         print("exiting...")
         pass

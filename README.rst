@@ -57,6 +57,9 @@ Nephele reads `~/.nephele.yaml` during startup. Its format looks like this:
        ssh-jump-host: {jump host name or ip}
        ssh-jump-user: {jump host username}
 
+   ssh-macros:
+     {macro-name}: {remote command}
+
 
 SSH support
 ===========
@@ -125,6 +128,65 @@ fairly straightforward. If you need a `-J` option to ssh to connect to
 a host, specify the jump host user and password using
 `profiles.{profile}.ssh-jump-host` and
 `profiles.{profile}.ssh-jump-user`, respectively.
+
+Command Reference
+=================
+
+Globally Available Commands
+---------------------------
+
+config
+^^^^^^
+
+Deal with configuration. Available subcommands:
+
+* config print - print the current configuration
+* config reload - reload the current configuration from disk
+* config set - change a setting in the configuration
+* config save - save the configuration to disk
+
+config -h for more details
+
+mfa
+^^^
+
+Enter a 6-digit MFA token. Nephele will execute the
+appropriate `aws` command line to authenticate that token.
+
+profile
+^^^^^^^
+
+Select nephele profile
+
+quit
+^^^^
+
+Exit nephele
+
+ssh
+^^^
+
+SSH to an instance. 
+
+Note: This command is extended in more specific contexts, for example
+inside Autoscaling Groups.
+
+slash
+^^^^^
+
+Navigate back to the root level.
+
+For example, if you are in `(aws)/stack:.../asg:.../`, executing
+`slash` will place you in `(aws)/`.
+
+up
+^^^
+
+Navigate up by one level.
+
+For example, if you are in `(aws)/stack:.../asg:.../`, executing `up`
+will place you in `(aws)/stack:.../`.
+
 
 New Features
 ============
@@ -246,4 +308,24 @@ I make you go through that?
 * ssh commands no longer depend on ~/.ssh/config working, instead
   supporting ~/.nephele.yaml
 
-* ssh now supports the fantastic -J option
+* ssh now supports the fantastic -J option (you'll need a recent ssh
+  client for this to work)
+
+* ssh has a very limited macro capability. Specifically, you can
+  do something like this:
+
+.. code-block:: config
+
+    ssh-macros:
+      cassandrapid: pgrep -f CassandraDaemon
+
+    (aws)/stack:.../asg:.../: ssh -m 0 cassandrapid
+    /usr/bin/ssh 192.168.1.1 -q -J jump-host.us-west-2.generic.domain pgrep -f CassandraDaemon
+    3285
+    (aws)/stack:.../asg:.../:
+
+  It does not yet have a way to do variable substitution.
+
+* You can now reload your config using the `configReload` command.
+
+* Started adding a command reference to this doc.

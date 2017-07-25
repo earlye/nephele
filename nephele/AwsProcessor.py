@@ -16,7 +16,7 @@ import Config
 from botocore.exceptions import ClientError
 from pprint import pprint
 
-def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True):
+def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True,name=''):
     if replaceKey or keyscan:
         resetKnownHost(address)
 
@@ -43,15 +43,15 @@ def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,comm
 
     if 'ssh-jump-host' in Config.config['selectedProfile']:
         if 'ssh-jump-user' in Config.config['selectedProfile']:
-            args.extend(["-J",'{}@{}'.format(Config.config['selectedProfile']['ssh-jump-user'],Config.config['selectedProfile']['ssh-jump-host'])])
+            args.extend(["-q", "-J",'{}@{}'.format(Config.config['selectedProfile']['ssh-jump-user'],Config.config['selectedProfile']['ssh-jump-host'])])
         else:
-            args.extend(["-J",Config.config['selectedProfile']['ssh-jump-host']])
+            args.extend(["-q", "-J",Config.config['selectedProfile']['ssh-jump-host']])
 
     if command:
         args.append(command)
 
     if echoCommand:
-        print " ".join(args)
+        print "{}{}".format(name," ".join(args))
         
     pid = fexecvp(args)
     if background:
@@ -61,7 +61,7 @@ def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,comm
         os.waitpid(pid,0)
    
 
-def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True):
+def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True,name=''):
     if isIp(instanceId):
         sshAddress(instanceId,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey)
     else:
@@ -75,7 +75,7 @@ def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verb
                 number += 1
         else:
             address = "{}".format(networkInterfaces[interfaceNumber]['PrivateIpAddress'])
-            sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey,echoCommand=echoCommand)
+            sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey,echoCommand=echoCommand,name=name)
 
 class AwsProcessor(cmd.Cmd):
     backgroundTasks=[]
@@ -138,7 +138,13 @@ class AwsProcessor(cmd.Cmd):
             raise Exception('No MFA devices were found for your account')
 
     def do_mfa(self, args):
-        """Enter a 6-digit MFA token. mfa -h for more details"""
+        """
+        Enter a 6-digit MFA token. Nephele will execute the appropriate
+        `aws` command line to authenticate that token. 
+
+        mfa -h for more details
+        """
+        
         parser = CommandArgumentParser("mfa")
         parser.add_argument(dest='token',help='MFA token value');
         parser.add_argument("-p","--profile",dest='awsProfile',default=AwsConnectionFactory.instance.getProfile(),help='MFA token value');
@@ -155,21 +161,41 @@ class AwsProcessor(cmd.Cmd):
         AwsConnectionFactory.instance.setMfaCredentials(credentials,awsProfile)
 
     def do_up(self,args):
-        """Go up one level"""
+        """
+        Navigate up by one level.
+
+        For example, if you are in `(aws)/stack:.../asg:.../`, executing `up` will place you in `(aws)/stack:.../`.
+
+        up -h for more details
+        """
+        parser = CommandArgumentParser("up")
+        args = vars(parser.parse_args(args))
         if None == self.parent:
             print "You're at the root. Try 'quit' to quit"
         else:
             return True
 
     def do_slash(self,args):
-        """Go up to root level"""
+        """
+        Navigate back to the root level.
+
+        For example, if you are in `(aws)/stack:.../asg:.../`, executing `slash` will place you in `(aws)/`.
+
+        slash -h for more details
+        """
+        parser = CommandArgumentParser("slash")
+        args = vars(parser.parse_args(args))
         if None == self.parent:
             print "You're at the root. Try 'quit' to quit"
         else:
             raise SlashException()
 
     def do_profile(self,args):
-        """Select nephele profile"""
+        """
+        Select nephele profile
+
+        profile -h for more details
+        """
         parser = CommandArgumentParser("profile")
         parser.add_argument(dest="profile",help="Profile name")
         parser.add_argument('-v','--verbose',dest="verbose",action='store_true',help='verbose')
@@ -193,11 +219,9 @@ class AwsProcessor(cmd.Cmd):
         AwsConnectionFactory.resetInstance(profile=awsProfile)
 
     def do_quit(self,args):
-        """Alias for 'exit'"""
-        return self.do_exit(args)
-        
-    def do_exit(self,args):
-        """Exit nephele"""
+        """
+        Exit nephele
+        """
         raise SystemExit
 
     def childLoop(self,child):
@@ -244,7 +268,13 @@ class AwsProcessor(cmd.Cmd):
             print("- stack_id:{}".format(stackResource.stack_id))
 
     def do_ssh(self,args):
-        """SSH to an instance. ssh -h for detailed help."""
+        """
+        SSH to an instance. 
+
+        Note: This command is extended in more specific contexts, for example inside Autoscaling Groups
+
+        ssh -h for more details
+        """
         parser = CommandArgumentParser("ssh")
         parser.add_argument(dest='id',help='identifier of the instance to ssh to [aws instance-id or ip address]')
         parser.add_argument('-a','--interface-number',dest='interface-number',default='0',help='instance id of the instance to ssh to')
@@ -255,6 +285,8 @@ class AwsProcessor(cmd.Cmd):
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
         parser.add_argument('-B','--background',dest='background',default=False,action='store_true',help="Run in the background. (e.g., forward an ssh session and then do other stuff in aws-shell).")
         parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');
+        parser.add_argument('-m',dest='macro',default=False,action='store_true',help='{command} is a series of macros to execute, not the actual command to run on the host');
+        parser.add_argument(dest='command',nargs='*',help="Command to run") 
         args = vars(parser.parse_args(args))
 
         targetId = args['id']
@@ -266,9 +298,31 @@ class AwsProcessor(cmd.Cmd):
         verbosity = args['verbosity']
         ignoreHostKey = args['ignore-host-key']
         noEcho = args['no-echo']
-        ssh(targetId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity, ignoreHostKey=ignoreHostKey, echoCommand = not noEcho)
+        
+        if args['macro']:
+            if len(args['command']) > 1:
+                print("Only one macro may be specified with the -m switch.")
+                return
+            else:
+                macro = args['command'][0]
+                print("Macro:{}".format(macro))
+                command = Config.config['ssh-macros'][macro]
+        else:
+            command = ' '.join(args['command'])
+        
+        ssh(targetId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity, command, ignoreHostKey=ignoreHostKey, echoCommand = not noEcho)
 
     def do_config(self,args):
+        """
+        Deal with configuration. Available subcommands:
+
+        * config print - print the current configuration
+        * config reload - reload the current configuration from disk
+        * config set - change a setting in the configuration
+        * config save - save the configuration to disk
+
+        config -h for more details
+        """
         parser = CommandArgumentParser("config")
         subparsers = parser.add_subparsers(help='sub-command help',dest='command')
         # subparsers.required=
@@ -279,14 +333,18 @@ class AwsProcessor(cmd.Cmd):
         
         parserSet = subparsers.add_parser('set',help='Set a configuration value')
         parserSave = subparsers.add_parser('save',help='Save the current configuration')
+        parserReload = subparsers.add_parser('reload',help='Reload the configuration from disk')
         args = vars(parser.parse_args(args))
 
         print("Command:{}".format(args['command']))
-        { 'print' : AwsProcessor.do_configPrint,
-          'set' : AwsProcessor.do_configSet,
-          'save' : AwsProcessor.do_configSave }[args['command']]( self, args )
+        {
+            'print' : AwsProcessor.sub_configPrint,
+            'set' : AwsProcessor.sub_configSet,
+            'save' : AwsProcessor.sub_configSave,
+            'reload' : AwsProcessor.sub_configReload
+        }[args['command']]( self, args )
 
-    def do_configPrint(self,args):
+    def sub_configPrint(self,args):
         if not args['keys']:
             print("Current configuration:{}".format(Config.config))
         else:
@@ -300,10 +358,11 @@ class AwsProcessor(cmd.Cmd):
                         entry = None
                 print "{}: {}".format(key,entry)
 
-    def do_configSet(self,args):
+    def sub_configSet(self,args):
         print("Set configuration:{}".format(args))
         
-    def do_configSave(self,args):
+    def sub_configSave(self,args):
         print("Save configuration:{}".format(args))
 
-        
+    def sub_configReload(self,args):
+        Config.loadConfig()

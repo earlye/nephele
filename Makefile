@@ -37,3 +37,6 @@ build: test sdist
 install: build
 	python setup.py install
 
+.PHONY : run
+run: 
+	nephele
