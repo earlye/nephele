@@ -313,8 +313,8 @@ I make you go through that?
 * ssh now supports the fantastic -J option (you'll need a recent ssh
   client for this to work)
 
-* ssh has a very limited macro capability. Specifically, you can
-  do something like this:
+* ssh has a very limited macro capability. While it does not yet have
+  a way to do variable substitution, you can do something like this:
 
 .. code-block:: config
 
@@ -326,8 +326,6 @@ I make you go through that?
     3285
     (aws)/stack:.../asg:.../:
 
-  It does not yet have a way to do variable substitution.
-
-* You can now reload your config using the `configReload` command.
+* You can now reload your config using the `config reload` command.
 
 * Started adding a command reference to this doc.
