@@ -132,6 +132,10 @@ a host, specify the jump host user and password using
 Command Reference
 =================
 
+We use the excellent argparse module to specify how commands are
+used. This reference contains descriptions only; for details on
+syntax, use any command's `-h` option.
+
 Globally Available Commands
 ---------------------------
 
@@ -144,8 +148,6 @@ Deal with configuration. Available subcommands:
 * config reload - reload the current configuration from disk
 * config set - change a setting in the configuration
 * config save - save the configuration to disk
-
-config -h for more details
 
 mfa
 ^^^
