@@ -41,7 +41,7 @@ Usage
 Configuration
 =============
 
-Nephele reads `~/.nephele.yaml` during startup. Its format looks like this:
+Nephele reads `~/.nephele/config.yaml` during startup. Its format looks like this:
 
 .. code-block::
 
@@ -64,7 +64,7 @@ Nephele reads `~/.nephele.yaml` during startup. Its format looks like this:
 SSH support
 ===========
 
-If you've set up your `~/.nephele.yaml` with a correct
+If you've set up your `~/.nephele/config.yaml` with a correct
 `profiles.{profile}.ssh-jump-host` entry, then this is probably the best
 part of `nephele`.
 
@@ -122,12 +122,37 @@ It also supports port forwarding!
     $ exit
     (aws)/stack:{stack}/stack:{substack}/asg:{asg}/: ssh 2 -L 8888 # <-- useful shorthand!
 
-So how do you set up your `~/.nephele.yaml` for this? It helps if your
+So how do you set up your `~/.nephele/config.yaml` for this? It helps if your
 AWS admins have set things up so that using ssh from a command line is
 fairly straightforward. If you need a `-J` option to ssh to connect to
 a host, specify the jump host user and password using
 `profiles.{profile}.ssh-jump-host` and
 `profiles.{profile}.ssh-jump-user`, respectively.
+
+SSH also supports selecting an ssh key based upon instance tags (or
+other instance metadata). To use this, implement an ssh plug-in, and
+place it in `~/.nephele/plugins` to accomplish this. Here's an
+example:
+
+.. code-block:: python
+
+    import os
+    class sshPlugin:
+      def getUserName(self, instance, profile):
+        """
+        Given a description of an AWS instance and a nephele profile,
+        determine the user name to use when ssh-ing to that instance.
+        """
+        return "ec2-user"
+
+      def getIdentityFile(self, instance, profile):
+        """
+        Given a description of an AWS instance and a nephele profile,
+        determine the name of the ssh identity file to use when ssh-ing to
+        that instance.
+        """
+        return os.path.join(os.path.expanduser("~"),".ssh","keys","prod",'somekey.pem')
+
 
 Command Reference
 =================
@@ -154,6 +179,14 @@ mfa
 
 Enter a 6-digit MFA token. Nephele will execute the
 appropriate `aws` command line to authenticate that token.
+
+instance
+^^^^^^^^
+
+Navigate to an instance. This is different from `ssh` in that it isn't
+_connecting_ to the instance; just navigating the shell there for
+detailed inspection.
+
 
 profile
 ^^^^^^^
@@ -235,7 +268,7 @@ I make you go through that?
 * `stacks` now adds `-e` and `-i` parameters so you can exclude or
   include new stack states in the filter.
 
-* `~/.nephele.yaml` is the new config file. It has one setting for now,
+* `~/.nephele/config.yaml` is the new config file. It has one setting for now,
   `profile`. Example:
 
 .. code-block:: config
@@ -307,8 +340,8 @@ I make you go through that?
 
 * stdplus.elipsifyMiddle is now a thing.
 
-* ssh commands no longer depend on ~/.ssh/config working, instead
-  supporting ~/.nephele.yaml
+* ssh commands no longer depend on `~/.ssh/config` working, instead
+  supporting `~/.nephele/config.yaml`
 
 * ssh now supports the fantastic -J option (you'll need a recent ssh
   client for this to work)
@@ -329,3 +362,6 @@ I make you go through that?
 * You can now reload your config using the `config reload` command.
 
 * Started adding a command reference to this doc.
+
+* There is now a mechanism for determining which user and identity
+  files to use when ssh-ing, based on instance metadata. 

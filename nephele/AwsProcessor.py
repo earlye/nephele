@@ -16,14 +16,31 @@ import Config
 from botocore.exceptions import ClientError
 from pprint import pprint
 
-def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True,name=''):
+import imp
+pluginPath = os.path.join(os.path.expanduser("~"),".nephele","plugins")
+def getPlugins(pluginPath,mainModule):
+    plugins = {}
+    possibleplugins = os.listdir(pluginPath)
+    for i in possibleplugins:
+        print("Loading plugin '{}'".format(i))
+        location = os.path.join(pluginPath, i)
+        if not os.path.isdir(location) or not mainModule + ".py" in os.listdir(location):
+            continue
+        info = imp.find_module(mainModule, [location])        
+        plugins[i] = imp.load_module(mainModule, *info)
+    return plugins
+plugins = getPlugins(pluginPath,'__init__')
+
+
+def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True,name='',identity=None,username=None):
+            
     if replaceKey or keyscan:
         resetKnownHost(address)
 
     if keyscan:
         keyscanHost(address)
 
-    args=["/usr/bin/ssh",address]
+    args=["/usr/bin/ssh"]
     if ignoreHostKey:
         args.extend(["-o","StrictHostKeyChecking=no",
                      "-o","UpdateHostKeys=yes"])
@@ -41,17 +58,25 @@ def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,comm
     if verbosity > 0:
         args.append("-" + "v" * verbosity)
 
+    if identity:
+        args.extend(["-i",identity])
+
     if 'ssh-jump-host' in Config.config['selectedProfile']:
         if 'ssh-jump-user' in Config.config['selectedProfile']:
             args.extend(["-q", "-J",'{}@{}'.format(Config.config['selectedProfile']['ssh-jump-user'],Config.config['selectedProfile']['ssh-jump-host'])])
         else:
             args.extend(["-q", "-J",Config.config['selectedProfile']['ssh-jump-host']])
 
+    if username:
+        args.append("{}@{}".format(username,address))
+    else:
+        args.append(address)
+
     if command:
         args.append(command)
 
     if echoCommand:
-        print "{}{}".format(name," ".join(args))
+        print "${}:{}".format(name," ".join(args))
         
     pid = fexecvp(args)
     if background:
@@ -61,13 +86,33 @@ def sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity=0,comm
         os.waitpid(pid,0)
    
 
-def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True,name=''):
+def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity=0,command=None,ignoreHostKey=False,echoCommand=True,name='',identity=None,username=None):
+
     if isIp(instanceId):
-        sshAddress(instanceId,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey)
+        sshAddress(instanceId,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey,name=name,identity=identity,username=username)
     else:
         client = AwsConnectionFactory.getEc2Client()
         response = client.describe_instances(InstanceIds=[instanceId])
-        networkInterfaces = response['Reservations'][0]['Instances'][0]['NetworkInterfaces'];
+        instance = response['Reservations'][0]['Instances'][0]
+        networkInterfaces = instance['NetworkInterfaces'];
+        
+        global plugins
+        sshPlugins = []
+        for key,plugin in plugins.iteritems():
+            sshPlugin = getattr(plugin,'sshPlugin')
+            if (sshPlugin):
+                sshPlugins.append(sshPlugin())
+
+        profile = ''
+        if not identity:
+            for sshPlugin in sshPlugins:
+                if not identity:
+                    identity = sshPlugin.getIdentityFile(instance,profile)            
+        if not username:
+            for sshPlugin in sshPlugins:
+                if not username:
+                    username = sshPlugin.getUserName(instance,profile)
+        
         if None == interfaceNumber:
             number = 0
             for interface in networkInterfaces:
@@ -75,7 +120,7 @@ def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verb
                 number += 1
         else:
             address = "{}".format(networkInterfaces[interfaceNumber]['PrivateIpAddress'])
-            sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey,echoCommand=echoCommand,name=name)
+            sshAddress(address,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey,echoCommand=echoCommand,name=name,identity=identity,username=username)
 
 class AwsProcessor(cmd.Cmd):
     backgroundTasks=[]
@@ -279,6 +324,7 @@ class AwsProcessor(cmd.Cmd):
         parser.add_argument(dest='id',help='identifier of the instance to ssh to [aws instance-id or ip address]')
         parser.add_argument('-a','--interface-number',dest='interface-number',default='0',help='instance id of the instance to ssh to')
         parser.add_argument('-ii','--ignore-host-key',dest='ignore-host-key',default=False,action='store_true',help='Ignore host key')
+        parser.add_argument('-i','--identity',dest='identity',default=None,help='Identity file to use')
         parser.add_argument('-ne','--no-echo',dest='no-echo',default=False,action='store_true',help='Do not echo command')
         parser.add_argument('-L',dest='forwarding',nargs='*',help="port forwarding string: {localport}:{host-visible-to-instance}:{remoteport} or {port}")
         parser.add_argument('-R','--replace-key',dest='replaceKey',default=False,action='store_true',help="Replace the host's key. This is useful when AWS recycles an IP address you've seen before.")
@@ -290,6 +336,7 @@ class AwsProcessor(cmd.Cmd):
         args = vars(parser.parse_args(args))
 
         targetId = args['id']
+        identity = args['identity']
         interfaceNumber = int(args['interface-number'])
         forwarding = args['forwarding']
         replaceKey = args['replaceKey']
@@ -310,7 +357,25 @@ class AwsProcessor(cmd.Cmd):
         else:
             command = ' '.join(args['command'])
         
-        ssh(targetId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity, command, ignoreHostKey=ignoreHostKey, echoCommand = not noEcho)
+        ssh(targetId,interfaceNumber, forwarding, replaceKey, keyscan, background, verbosity, command, ignoreHostKey=ignoreHostKey, echoCommand = not noEcho, name=targetId,identity=identity)
+
+    def do_instance(self,args):
+        """
+        Navigate to an instance. This is different from `ssh` in that it
+        isn't _connecting_ to the instance; just navigating the shell
+        there for detailed inspection.
+
+        Note: This command will eventually be extended in more specific contexts, for example inside Autoscaling Groups
+        
+        instance -h for more details
+
+        """
+        parser = CommandArgumentParser("instance")
+        parser.add_argument(dest='id',help='identifier of the instance to navigate to [aws instance-id]')
+        args = vars(parser.parse_args(args))
+
+        instanceId = args['id']
+        self.childLoop(AwsProcessor.processorFactory.Instance(instanceId,self))
 
     def do_config(self,args):
         """

@@ -3,7 +3,7 @@ import stdplus
 import yaml
 
 config = {}
-configFile = os.path.join(os.path.expanduser("~"),".nephele.yaml")
+configFile = os.path.join(os.path.expanduser("~"),".nephele","config.yaml")
 
 def loadConfig():
     global config

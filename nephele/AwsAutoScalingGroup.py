@@ -191,7 +191,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-B','--background',dest='background',default=False,action='store_true',help="Run in the background. (e.g., forward an ssh session and then do other stuff in aws-shell).")
         parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
         parser.add_argument('-m',dest='macro',default=False,action='store_true',help='{command} is a series of macros to execute, not the actual command to run on the host');
-        parser.add_argument(dest='command',nargs='*',help="Command to run on all hosts.") # consider adding a filter option later
+        parser.add_argument(dest='command',nargs='*',help="Command to run") 
         args = vars(parser.parse_args(args))
 
         interfaceNumber = int(args['interface-number'])

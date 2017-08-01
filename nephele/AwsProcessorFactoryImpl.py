@@ -1,4 +1,5 @@
 import AwsAutoScalingGroup
+import AwsInstance
 import AwsLogGroup
 import AwsRole
 import AwsStack
@@ -12,6 +13,10 @@ class AwsProcessorFactoryImpl:
     def Eni(self,physicalId,parent):
         reload(AwsEni)
         return AwsEni.AwsEni(physicalId,parent)
+
+    def Instance(self,instanceId,parent):
+        reload(AwsInstance)
+        return AwsInstance.AwsInstance(instanceId,parent)
     
     def Stack(self,stack,logicalName,parent):
         reload(AwsStack)

@@ -39,4 +39,4 @@ install: build
 
 .PHONY : run
 run: 
-	nephele
+	cd nephele && ./main.py

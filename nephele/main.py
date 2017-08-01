@@ -34,7 +34,7 @@ from AwsStack import AwsStack
 from AwsRoot import AwsRoot
 
 
-histfile = os.path.join(os.path.expanduser("~"), ".nephele_hist")
+histfile = os.path.join(os.path.expanduser("~"), ".nephele","history")
 
 def main():
     try:
