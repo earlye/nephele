@@ -20,6 +20,8 @@ import imp
 pluginPath = os.path.join(os.path.expanduser("~"),".nephele","plugins")
 def getPlugins(pluginPath,mainModule):
     plugins = {}
+    if not os.path.isdir(pluginPath):
+        return plugins    
     possibleplugins = os.listdir(pluginPath)
     for i in possibleplugins:
         print("Loading plugin '{}'".format(i))
