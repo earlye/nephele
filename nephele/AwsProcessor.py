@@ -104,8 +104,9 @@ def ssh(instanceId,interfaceNumber,forwarding,replaceKey,keyscan,background,verb
             sshPlugin = getattr(plugin,'sshPlugin')
             if (sshPlugin):
                 sshPlugins.append(sshPlugin())
-
-        profile = ''
+                
+        profile = Config.config['selectedProfile']
+        print "profile:{}".format(profile)
         if not identity:
             for sshPlugin in sshPlugins:
                 if not identity:
@@ -333,10 +334,12 @@ class AwsProcessor(cmd.Cmd):
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
         parser.add_argument('-B','--background',dest='background',default=False,action='store_true',help="Run in the background. (e.g., forward an ssh session and then do other stuff in aws-shell).")
         parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');
-        parser.add_argument('-m',dest='macro',default=False,action='store_true',help='{command} is a series of macros to execute, not the actual command to run on the host');
+        parser.add_argument('-m',dest='macro',default=False,action='store_true',help='{command} is a macro to execute, not the actual command to run on the host');
         parser.add_argument(dest='command',nargs='*',help="Command to run") 
         args = vars(parser.parse_args(args))
+        self.ssh(args)
 
+    def ssh(self,args):
         targetId = args['id']
         identity = args['identity']
         interfaceNumber = int(args['interface-number'])
