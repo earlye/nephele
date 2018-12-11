@@ -1,8 +1,8 @@
-import AwsAutoScalingGroup
-import AwsLogGroup
-import AwsRole
-import AwsStack
-import AwsEni
+import nephele.AwsAutoScalingGroup
+import nephele.AwsLogGroup
+import nephele.AwsRole
+import nephele.AwsStack
+import nephele.AwsEni
 
 class AwsProcessorFactoryImpl:
     def AutoScalingGroup(self,scalingGroup,parent):
@@ -12,11 +12,11 @@ class AwsProcessorFactoryImpl:
     def Eni(self,physicalId,parent):
         reload(AwsEni)
         return AwsEni.AwsEni(physicalId,parent)
-    
+
     def Stack(self,stack,logicalName,parent):
         reload(AwsStack)
         return AwsStack.AwsStack(stack,logicalName,parent)
-    
+
     def LogGroup(self,logGroupId,parent):
         reload(AwsLogGroup)
         return AwsLogGroup.AwsLogGroup(logGroupId,parent)

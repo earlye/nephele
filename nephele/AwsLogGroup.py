@@ -1,8 +1,8 @@
-import AwsLogStream
+import nephele.AwsLogStream
 
-from AwsProcessor import AwsProcessor
+from nephele.AwsProcessor import AwsProcessor
 from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
-from CommandArgumentParser import CommandArgumentParser
+from nephele.CommandArgumentParser import CommandArgumentParser
 
 from pprint import pprint
 
@@ -32,15 +32,15 @@ class AwsLogGroup(AwsProcessor):
         self.description = descriptions[0]
 
         self.logStreams = self.loadLogStreams()
-        print "== logStream"
+        print( "== logStream" )
         maxIndex = "{}".format(len(self.logStreams)+1)
-        print "maxIndex:{}".format(maxIndex)
+        print( "maxIndex:{}".format(maxIndex) )
         frm = "  {{0:{}d}}: {{1}}".format(len(maxIndex))
-        print frm
+        print( frm )
 
         index = 0
         for logStream in self.logStreams:
-            print frm.format(index,logStream['logStreamName'])
+            print( frm.format(index,logStream['logStreamName']) )
             index += 1
 
     def loadLogStreams(self):
@@ -48,11 +48,11 @@ class AwsLogGroup(AwsProcessor):
                                                                                            #logStreamNamePrefix=self.logStreamNamePrefix,
                                                                                            orderBy=self.orderBy,
                                                                                            descending=self.descending)
-        
+
         logStreams = response['logStreams']
         for logStream in logStreams:
             logStream['logGroupName']=self.stackResource.physical_resource_id
-            
+
         return logStreams
 
     def do_logStream(self,args):
@@ -61,11 +61,10 @@ class AwsLogGroup(AwsProcessor):
         parser.add_argument(dest='logStream',help='logStream index.');
         args = vars(parser.parse_args(args))
 
-        print "loading log stream {}".format(args['logStream'])
+        print( "loading log stream {}".format(args['logStream']) )
         index = int(args['logStream'])
         logStream = self.logStreams[index]
 
-        print "logStream:{}".format(logStream)
+        print( "logStream:{}".format(logStream) )
         self.childLoop(AwsLogStream.AwsLogStream(logStream,self))
         #self.stackResource(logStream.stack_name,logStream.logical_id)
-        

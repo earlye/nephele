@@ -10,5 +10,5 @@ def loadConfig():
     global configFile
     config={}
     if os.path.exists(configFile):
-        print "Loading config:{}".format(configFile)
+        print( "Loading config:{}".format(configFile) )
         config = yaml.load(stdplus.readfile(configFile))

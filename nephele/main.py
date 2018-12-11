@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 
 import argparse
 import atexit
@@ -14,24 +14,24 @@ import sys
 import traceback
 import yaml
 
-import Config
-from AwsProcessor import AwsProcessor
-from AwsProcessorFactoryImpl import AwsProcessorFactoryImpl
-from CommandArgumentParser import CommandArgumentParser        
+from nephele import Config
+from nephele.AwsProcessor import AwsProcessor
+from nephele.AwsProcessorFactoryImpl import AwsProcessorFactoryImpl
+from nephele.CommandArgumentParser import CommandArgumentParser
 
 from botocore.exceptions import ClientError
 from fnmatch import fnmatch
 from pprint import pprint
 from stdplus import *
 
-mappedKeys = { 'SecretAccessKey' : 'AWS_SECRET_ACCESS_KEY', 'SessionToken': 'AWS_SECURITY_TOKEN', 'AccessKeyId' : 'AWS_ACCESS_KEY_ID' }
+# DELETEME: mappedKeys = { 'SecretAccessKey' : 'AWS_SECRET_ACCESS_KEY', 'SessionToken': 'AWS_SECURITY_TOKEN', 'AccessKeyId' : 'AWS_ACCESS_KEY_ID' }
 
-from SilentException import SilentException
-from SlashException import SlashException
+from nephele.SilentException import SilentException
+from nephele.SlashException import SlashException
 
-from AwsAutoScalingGroup import AwsAutoScalingGroup        
-from AwsStack import AwsStack
-from AwsRoot import AwsRoot
+from nephele.AwsAutoScalingGroup import AwsAutoScalingGroup
+from nephele.AwsStack import AwsStack
+from nephele.AwsRoot import AwsRoot
 
 
 histfile = os.path.join(os.path.expanduser("~"), ".nephele_hist")
@@ -57,12 +57,12 @@ def main():
             pass
         atexit.register(readline.write_history_file, histfile)
         atexit.register(AwsProcessor.killBackgroundTasks)
-        
+
         AwsProcessor.processorFactory = AwsProcessorFactoryImpl()
 
         awsConfigFilename = os.path.expanduser("~/.aws/config")
         if not os.path.exists(awsConfigFilename):
-            print "ERROR: aws cli has not been configured."
+            print( "ERROR: aws cli has not been configured." )
             pid = fexecvp(['aws','configure'])
             os.waitpid(pid,0)
 
@@ -80,13 +80,12 @@ def main():
 
         if cmdloop:
             command_prompt.cmdloop()
-        
-    except SystemExit, e:
+
+    except SystemExit as systemExit:
         print("exiting...")
         pass
-    except SilentException:
+    except SilentException as ignore:
         pass
 
 if __name__== "__main__":
     main()
-        

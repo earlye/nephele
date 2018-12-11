@@ -1,6 +1,6 @@
-from AwsProcessor import AwsProcessor
+from nephele.AwsProcessor import AwsProcessor
 from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
-from CommandArgumentParser import CommandArgumentParser
+from nephele.CommandArgumentParser import CommandArgumentParser
 
 from pprint import pprint
 

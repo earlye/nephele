@@ -2,7 +2,8 @@ import argparse
 import cmd
 import shlex
 
-from SilentException import SilentException
+from nephele.SilentException import SilentException
+from stdplus import isString
 
 class VAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None):
@@ -18,7 +19,7 @@ class VAction(argparse.Action):
 class CommandArgumentParser(argparse.ArgumentParser):
     def __init__(self,command = None):
         argparse.ArgumentParser.__init__(self, prog=command)
-        
+
     def exit(self, status=0, message=None):
         if None == message:
             raise SilentException()
@@ -29,7 +30,6 @@ class CommandArgumentParser(argparse.ArgumentParser):
         raise Exception(message)
 
     def parse_args(self,commandLine):
-        if isinstance(commandLine, basestring):
+        if isString(commandLine):
             commandLine = shlex.split(commandLine)
         return super(CommandArgumentParser,self).parse_args(commandLine)
-    

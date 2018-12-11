@@ -1,4 +1,4 @@
-from AwsProcessor import AwsProcessor
+from nephele.AwsProcessor import AwsProcessor
 from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
 
 from pprint import pprint

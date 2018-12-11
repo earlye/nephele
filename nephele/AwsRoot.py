@@ -1,6 +1,6 @@
 from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
-from AwsProcessor import AwsProcessor
-from CommandArgumentParser import CommandArgumentParser 
+from nephele.AwsProcessor import AwsProcessor
+from nephele.CommandArgumentParser import CommandArgumentParser
 from stdplus import *
 
 stackStatusFilter=['CREATE_COMPLETE','CREATE_FAILED','CREATE_IN_PROGRESS','ROLLBACK_IN_PROGRESS','ROLLBACK_COMPLETE','UPDATE_COMPLETE','DELETE_IN_PROGRESS']
@@ -44,16 +44,16 @@ class AwsRoot(AwsProcessor):
         except ValueError:
             stack = AwsConnectionFactory.instance.getCfResource().Stack(args['stack'])
 
-        print "Here are the details of the stack you are about to delete:"
-        print "Stack.name: {}".format(stack.name)
-        print "Stack.stack_id: {}".format(stack.stack_id)
-        print "Stack.creation_time: {}".format(stack.creation_time)
+        print( "Here are the details of the stack you are about to delete:" )
+        print( "Stack.name: {}".format(stack.name) )
+        print( "Stack.stack_id: {}".format(stack.stack_id) )
+        print( "Stack.creation_time: {}".format(stack.creation_time) )
         confirmation = raw_input("If you are sure, enter the Stack.name here: ")
         if stack.name == confirmation:
             stack.delete()
-            print "Stack deletion in progress"
+            print( "Stack deletion in progress" )
         else:
-            print "Stack deletion canceled: '{}' != '{}'".format(stack.name,confirmation)
+            print( "Stack deletion canceled: '{}' != '{}'".format(stack.name,confirmation) )
 
     def do_stacks(self,args):
         """List available stacks. stacks -h for detailed help."""
@@ -72,7 +72,7 @@ class AwsRoot(AwsProcessor):
         filters = args['filters']
 
         global stackStatusFilter
-        for i in includes:            
+        for i in includes:
             if not i in stackStatusFilter:
                 stackStatusFilter.append(i)
         for e in excludes:
@@ -106,11 +106,11 @@ class AwsRoot(AwsProcessor):
         self.stackList = stackSummariesByIndex
         if not (args['silent'] or args['summary']):
             for index,summary in stackSummariesByIndex.items():
-                print '{0:3d}: {2:20} {1:40} {3}'.format(summary['Index'],summary['StackName'],summary['StackStatus'],defaultifyDict(summary,'StackStatusReason',''))
+                print( '{0:3d}: {2:20} {1:40} {3}'.format(summary['Index'],summary['StackName'],summary['StackStatus'],defaultifyDict(summary,'StackStatusReason','')) )
 
         if args['summary'] and not args['silent']:
-            print '{} stacks'.format(len(stackSummariesByIndex))
-        
+            print( '{} stacks'.format(len(stackSummariesByIndex)) )
+
     def do_stack_resource(self, args):
         """Use specified stack resource. stack_resource -h for detailed help."""
         parser = CommandArgumentParser()

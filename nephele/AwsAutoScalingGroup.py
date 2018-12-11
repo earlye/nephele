@@ -1,11 +1,13 @@
-from AwsProcessor import *
+from nephele.AwsProcessor import *
 from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
-from CommandArgumentParser import *
+from nephele.CommandArgumentParser import *
 from joblib import Parallel, delayed
+
+import nephele.Config
 
 import boto3
 import stdplus
-import Config
+
 
 class AwsAutoScalingGroup(AwsProcessor):
     def __init__(self,scalingGroup,parent):
@@ -25,10 +27,10 @@ class AwsAutoScalingGroup(AwsProcessor):
         if refresh:
             response = self.client.describe_scaling_activities(AutoScalingGroupName=self.scalingGroup)
             self.activities = response['Activities']
-        
+
         index = 0
         for activity in self.activities:
-            print "{}: {} -> {} {}: {}".format(index,activity['StartTime'],stdplus.defaultifyDict(activity,'EndTime',''),activity['StatusCode'],activity['Description'])
+            print("{}: {} -> {} {}: {}".format(index,activity['StartTime'],stdplus.defaultifyDict(activity,'EndTime',''),activity['StatusCode'],activity['Description']))
             index = index + 1
 
     def do_printActivity(self,args):
@@ -40,7 +42,7 @@ class AwsAutoScalingGroup(AwsProcessor):
 
         activity = self.activities[index]
         pprint(activity)
-        
+
     def do_printInstances(self,args):
         """Print the list of instances in this auto scaling group. printInstances -h for detailed help"""
         parser = CommandArgumentParser("printInstances")
@@ -51,7 +53,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-r','--refresh',action='store_true',dest='refresh',help='refresh');
         parser.add_argument('-z','--zones',dest='availabilityZones',nargs='+',help='Only include specified availability zones');
         args = vars(parser.parse_args(args))
-        
+
         client = AwsConnectionFactory.getEc2Client()
 
         filters = args['filters']
@@ -63,37 +65,37 @@ class AwsAutoScalingGroup(AwsProcessor):
 
         if args['refresh']:
             self.scalingGroupDescription = self.client.describe_auto_scaling_groups(AutoScalingGroupNames=[self.scalingGroup])
-        
+
         # print "AutoScaling Group:{}".format(self.scalingGroup)
-        print "=== Instances ==="
+        print( "=== Instances ===" )
         instances = self.scalingGroupDescription['AutoScalingGroups'][0]['Instances']
 
         instances = filter( lambda x: fnmatches(x['InstanceId'],filters),instances)
         if availabilityZones:
             instances = filter( lambda x: fnmatches(x['AvailabilityZone'],availabilityZones),instances)
-        
+
         index = 0
         for instance in instances:
             instance['index'] = index
-            print "* {0:3d} {1} {2} {3}".format(index,instance['HealthStatus'],instance['AvailabilityZone'],instance['InstanceId'])
+            print( "* {0:3d} {1} {2} {3}".format(index,instance['HealthStatus'],instance['AvailabilityZone'],instance['InstanceId']) )
             description = None
             if needDescription:
                 description = client.describe_instances(InstanceIds=[instance['InstanceId']])
             if addresses:
                 networkInterfaces = description['Reservations'][0]['Instances'][0]['NetworkInterfaces']
                 number = 0
-                print "      Network Interfaces:"
+                print( "      Network Interfaces:" )
                 for interface in networkInterfaces:
-                    print "         * {0:3d} {1}".format(number, interface['PrivateIpAddress'])
+                    print( "         * {0:3d} {1}".format(number, interface['PrivateIpAddress']) )
                     number +=1
             if tags:
                 tags = description['Reservations'][0]['Instances'][0]['Tags']
-                print "      Tags:"
+                print( "      Tags:" )
                 for tag in tags:
-                    print "        * {0} {1}".format(tag['Key'],tag['Value'])
+                    print( "        * {0} {1}".format(tag['Key'],tag['Value']) )
             if details:
                 pprint(description)
-                
+
             index += 1
 
     def do_printPolicy(self,args):
@@ -103,8 +105,8 @@ class AwsAutoScalingGroup(AwsProcessor):
 
         policy = self.client.describe_policies(AutoScalingGroupName=self.scalingGroup)
         pprint(policy)
-        
-            
+
+
     def do_rebootInstance(self,args):
         """Restart specified instance"""
         parser = CommandArgumentParser("rebootInstance")
@@ -122,7 +124,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         client = AwsConnectionFactory.getEc2Client()
         client.reboot_instances(InstanceIds=[instanceId['InstanceId']])
 
-        
+
     def do_setDesiredCapacity(self,args):
         """Set the desired capacity"""
         parser = CommandArgumentParser("setDesiredCapacity")
@@ -130,10 +132,10 @@ class AwsAutoScalingGroup(AwsProcessor):
         args = vars(parser.parse_args(args))
 
         value = int(args['value'])
-        print "Setting desired capacity to {}".format(value)
+        print( "Setting desired capacity to {}".format(value) )
         client = AwsConnectionFactory.getAsgClient()
         client.set_desired_capacity(AutoScalingGroupName=self.scalingGroup,DesiredCapacity=value,HonorCooldown=True)
-        print "Scaling activity in progress"
+        print( "Scaling activity in progress" )
 
     def do_run(self,args):
         """SSH to each instance in turn and run specified command"""
@@ -143,7 +145,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-ii','--ignore-host-key',dest='ignore-host-key',default=False,action='store_true',help='Ignore host key')
         parser.add_argument('-ne','--no-echo',dest='no-echo',default=False,action='store_true',help='Do not echo command')
         parser.add_argument(dest='command',nargs='+',help="Command to run on all hosts.") # consider adding a filter option later
-        parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
+        parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');
         parser.add_argument('-j',dest='jobs',type=int,default=1,help='Number of hosts to contact in parallel');
         parser.add_argument('-s',dest='skip',type=int,default=0,help='Skip this many hosts');
         parser.add_argument('-m',dest='macro',default=False,action='store_true',help='{command} is a series of macros to execute, not the actual command to run on the host');
@@ -173,11 +175,11 @@ class AwsAutoScalingGroup(AwsProcessor):
                 command = Config.config['ssh-macros'][macro]
         else:
             command = ' '.join(args['command'])
-            
+
         Parallel(n_jobs=jobs)(
             delayed(ssh)(instance['InstanceId'],0,[],replaceKey,keyscan,False,verbosity,command,ignoreHostKey=ignoreHostKey,echoCommand=not noEcho,name="{}:{}: ".format(instance['index'],instance['InstanceId'])) for instance in instances
         )
-        
+
     def do_ssh(self,args):
         """SSH to an instance. ssh -h for detailed help"""
         parser = CommandArgumentParser("ssh")
@@ -189,7 +191,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         parser.add_argument('-R','--replace-key',dest='replaceKey',default=False,action='store_true',help="Replace the host's key. This is useful when AWS recycles an IP address you've seen before.")
         parser.add_argument('-Y','--keyscan',dest='keyscan',default=False,action='store_true',help="Perform a keyscan to avoid having to say 'yes' for a new host. Implies -R.")
         parser.add_argument('-B','--background',dest='background',default=False,action='store_true',help="Run in the background. (e.g., forward an ssh session and then do other stuff in aws-shell).")
-        parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');        
+        parser.add_argument('-v',dest='verbosity',default=0,action=VAction,nargs='?',help='Verbosity. The more instances, the more verbose');
         parser.add_argument('-m',dest='macro',default=False,action='store_true',help='{command} is a series of macros to execute, not the actual command to run on the host');
         parser.add_argument(dest='command',nargs='*',help="Command to run on all hosts.") # consider adding a filter option later
         args = vars(parser.parse_args(args))
@@ -212,7 +214,7 @@ class AwsAutoScalingGroup(AwsProcessor):
             target = instance['InstanceId']
         except ValueError: # if args['instance'] is not an int, for example.
             pass
-        
+
         if args['macro']:
             if len(args['command']) > 1:
                 print("Only one macro may be specified with the -m switch.")
@@ -223,7 +225,7 @@ class AwsAutoScalingGroup(AwsProcessor):
                 command = Config.config['ssh-macros'][macro]
         else:
             command = ' '.join(args['command'])
-            
+
         ssh(target,interfaceNumber,forwarding,replaceKey,keyscan,background,verbosity,command,ignoreHostKey=ignoreHostKey,echoCommand = not noEcho)
 
     def do_startInstance(self,args):
@@ -243,7 +245,7 @@ class AwsAutoScalingGroup(AwsProcessor):
 
         client = AwsConnectionFactory.getEc2Client()
         client.start_instances(InstanceIds=[instanceId['InstanceId']])
-            
+
     def do_stopInstance(self,args):
         """Stop specified instance"""
         parser = CommandArgumentParser("stopInstance")
@@ -262,7 +264,7 @@ class AwsAutoScalingGroup(AwsProcessor):
 
         client = AwsConnectionFactory.getEc2Client()
         client.stop_instances(InstanceIds=[instanceId['InstanceId']],Force=force)
-            
+
     def do_terminateInstance(self,args):
         """Terminate an EC2 instance"""
         parser = CommandArgumentParser("terminateInstance")
@@ -280,7 +282,7 @@ class AwsAutoScalingGroup(AwsProcessor):
         client = AwsConnectionFactory.getEc2Client()
         client.terminate_instances(InstanceIds=[instanceId['InstanceId']])
         self.do_printInstances("-r")
-            
+
     def do_updateCapacity(self,args):
         """Set the desired capacity"""
         parser = CommandArgumentParser("updateMinMax")
@@ -292,10 +294,9 @@ class AwsAutoScalingGroup(AwsProcessor):
         minSize = args['min']
         maxSize = args['max']
         desired = args['desired']
-        
-        print "Setting desired capacity to {}-{}, {}".format(minSize,maxSize,desired)
+
+        print( "Setting desired capacity to {}-{}, {}".format(minSize,maxSize,desired) )
         client = AwsConnectionFactory.getAsgClient()
         client.update_auto_scaling_group(AutoScalingGroupName=self.scalingGroup,MinSize=minSize,MaxSize=maxSize,DesiredCapacity=desired)
         #client.set_desired_capacity(AutoScalingGroupName=self.scalingGroup,DesiredCapacity=value,HonorCooldown=True)
-        print "Scaling activity in progress"
-            
+        print( "Scaling activity in progress" )

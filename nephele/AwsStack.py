@@ -1,9 +1,9 @@
 import os
 import pyperclip
 
-from AwsProcessor import AwsProcessor
+from nephele.AwsProcessor import AwsProcessor
 from stdplusAwsHelpers.AwsConnectionFactory import AwsConnectionFactory
-from CommandArgumentParser import CommandArgumentParser
+from nephele.CommandArgumentParser import CommandArgumentParser
 from stdplus import *
 
 from pprint import pprint
@@ -31,7 +31,7 @@ class WrappedParameter:
         self.logical_id = parameter['ParameterKey']
         self.resource_status = parameter['ParameterValue']
         self.resource_status_reason = defaultifyDict(parameter,'Description','')
-        
+
 class AwsStack(AwsProcessor):
     def __init__(self,stack,logicalName,parent):
         """Construct an AwsStack command processor"""
@@ -91,18 +91,18 @@ class AwsStack(AwsProcessor):
                 index += 1
         result['resourcesByTypeIndex'] = resourcesByTypeIndex;
         return result
-        
+
     def printStack(self,wrappedStack,include=None,filters=["*"]):
         """Prints the stack"""
         rawStack = wrappedStack['rawStack']
-        print "==== Stack {} ====".format(rawStack.name)
-        print "Status: {} {}".format(rawStack.stack_status,defaultify(rawStack.stack_status_reason,''))
+        print( "==== Stack {} ====".format(rawStack.name) )
+        print( "Status: {} {}".format(rawStack.stack_status,defaultify(rawStack.stack_status_reason,'')) )
 
         for resourceType, resources in wrappedStack['resourcesByTypeIndex'].items():
             if resourceType in AwsProcessor.resourceTypeAliases:
                 resourceType = AwsProcessor.resourceTypeAliases[resourceType];
             if (None == include or resourceType in include) and len(resources):
-                print "== {}:".format(resourceType)
+                print( "== {}:".format(resourceType) )
                 logicalIdWidth = 1
                 resourceStatusWidth = 1
                 resourceStatusReasonWidth = 1
@@ -113,19 +113,19 @@ class AwsStack(AwsProcessor):
                 frm = "    {{0:3d}}: {{1:{0}}} {{2:{1}}} {{3}}".format(logicalIdWidth,resourceStatusWidth)
                 for index, resource in resources.items():
                     if fnmatches(resource.logical_id.lower(),filters):
-                        print frm.format(index,resource.logical_id,
+                        print( frm.format(index,resource.logical_id,
                                          elipsifyMiddle(repr(resource.resource_status),50),
-                                         elipsifyMiddle(repr(defaultify(resource.resource_status_reason,'')),150))
+                                         elipsifyMiddle(repr(defaultify(resource.resource_status_reason,'')),150)) )
 
     def do_browse(self,args):
         """Open the current stack in a browser."""
         rawStack = self.wrappedStack['rawStack']
         os.system("open -a \"Google Chrome\" https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stack/detail?stackId={}".format(rawStack.stack_id))
-                
+
     def do_refresh(self,args):
         """Refresh view of the current stack. refresh -h for detailed help"""
         self.wrappedStack = self.wrapStack(AwsConnectionFactory.instance.getCfResource().Stack(self.wrappedStack['rawStack'].name))
-        
+
     def do_print(self,args):
         """Print the current stack. print -h for detailed help"""
         parser = CommandArgumentParser("print")
@@ -138,7 +138,7 @@ class AwsStack(AwsProcessor):
             self.do_refresh('')
 
         self.printStack(self.wrappedStack,args['include'],args['filters'])
-        
+
     def do_resource(self,args):
         """Go to the specified resource. resource -h for detailed help"""
         parser = CommandArgumentParser("resource")
@@ -155,7 +155,7 @@ class AwsStack(AwsProcessor):
         parser.add_argument(dest='asg',help='asg index or name');
         args = vars(parser.parse_args(args))
 
-        print "loading auto scaling group {}".format(args['asg'])
+        print( "loading auto scaling group {}".format(args['asg']) )
         try:
             index = int(args['asg'])
             asgSummary = self.wrappedStack['resourcesByTypeIndex']['AWS::AutoScaling::AutoScalingGroup'][index]
@@ -170,7 +170,7 @@ class AwsStack(AwsProcessor):
         parser.add_argument(dest='eni',help='eni index or name');
         args = vars(parser.parse_args(args))
 
-        print "loading eni {}".format(args['eni'])
+        print( "loading eni {}".format(args['eni']) )
         try:
             index = int(args['eni'])
             eniSummary = self.wrappedStack['resourcesByTypeIndex']['AWS::EC2::NetworkInterface'][index]
@@ -186,14 +186,14 @@ class AwsStack(AwsProcessor):
         parser.add_argument(dest='logGroup',help='logGroup index or name');
         args = vars(parser.parse_args(args))
 
-        print "loading log group {}".format(args['logGroup'])
+        print( "loading log group {}".format(args['logGroup']) )
         try:
             index = int(args['logGroup'])
             logGroup = self.wrappedStack['resourcesByTypeIndex']['AWS::Logs::LogGroup'][index]
         except:
             logGroup = self.wrappedStack['resourcesByTypeName']['AWS::Logs::LogGroup'][args['logGroup']]
 
-        print "logGroup:{}".format(logGroup)
+        print( "logGroup:{}".format(logGroup) )
         self.stackResource(logGroup.stack_name,logGroup.logical_id)
 
     def do_role(self,args):
@@ -202,26 +202,26 @@ class AwsStack(AwsProcessor):
         parser.add_argument(dest='role',help='role index or name');
         args = vars(parser.parse_args(args))
 
-        print "loading role {}".format(args['role'])
+        print( "loading role {}".format(args['role']) )
         try:
             index = int(args['role'])
             role = self.wrappedStack['resourcesByTypeIndex']['AWS::IAM::Role'][index]
         except:
             role = self.wrappedStack['resourcesByTypeName']['AWS::IAM::Role'][args['role']]
 
-        print "role:{}".format(role)
+        print( "role:{}".format(role) )
         self.stackResource(role.stack_name,role.logical_id)
 
-        
+
     def do_stack(self,args):
         """Go to the specified stack. stack -h for detailed help."""
         parser = CommandArgumentParser("stack")
         parser.add_argument(dest='stack',help='stack index or name');
         args = vars(parser.parse_args(args))
 
-        print "loading stack {}".format(args['stack'])
+        print( "loading stack {}".format(args['stack']) )
         try:
-            index = int(args['stack'])            
+            index = int(args['stack'])
             stackSummary = self.wrappedStack['resourcesByTypeIndex']['AWS::CloudFormation::Stack'][index]
         except ValueError:
             stackSummary = self.wrappedStack['resourcesByTypeName']['AWS::CloudFormation::Stack'][args['stack']]
@@ -233,10 +233,10 @@ class AwsStack(AwsProcessor):
         parser = CommandArgumentParser("template")
         args = vars(parser.parse_args(args))
 
-        print "reading template for stack."
+        print( "reading template for stack." )
         rawStack = self.wrappedStack['rawStack']
         template = AwsConnectionFactory.getCfClient().get_template(StackName=rawStack.name)
-        print template['TemplateBody']
+        print( template['TemplateBody'] )
 
     def getWrappedItem(self,typeName,IdOrName):
         try:
@@ -244,9 +244,9 @@ class AwsStack(AwsProcessor):
             return self.wrappedStack['resourcesByTypeIndex'][typeName][index]
         except ValueError:
             return self.wrappedStack['resourcesByTypeName'][typeName][IdOrName]
-        
+
     def getOutputs(self,outputs):
-        values = []        
+        values = []
         for output in outputs:
             values.append(self.getWrappedItem('outputs',output).resource_status)
         return values
@@ -255,7 +255,7 @@ class AwsStack(AwsProcessor):
         """Copy specified id to stack. copy -h for detailed help."""
         parser = CommandArgumentParser("copy")
         parser.add_argument('-a','--asg',dest='asg',nargs='+',required=False,default=[],help='Copy specified ASG info.')
-        parser.add_argument('-o','--output',dest='output',nargs='+',required=False,default=[],help='Copy specified output info.')        
+        parser.add_argument('-o','--output',dest='output',nargs='+',required=False,default=[],help='Copy specified output info.')
         args = vars(parser.parse_args(args))
         values = []
         if args['output']:
@@ -280,10 +280,10 @@ class AwsStack(AwsProcessor):
         parser = CommandArgumentParser("parameter")
         parser.add_argument(dest="id",help="Parameter to print")
         args = vars(parser.parse_args(args))
-        
-        print "printing parameter {}".format(args['id'])
+
+        print( "printing parameter {}".format(args['id']) )
         try:
-            index = int(args['id'])            
+            index = int(args['id'])
             parameter = self.wrappedStack['resourcesByTypeName']['parameters'][index]
         except ValueError:
             parameter = self.wrappedStack['resourcesByTypeName']['parameters'][args['id']]
