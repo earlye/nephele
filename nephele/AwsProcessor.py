@@ -197,11 +197,13 @@ class AwsProcessor(cmd.Cmd):
         profile -h for more details
         """
         parser = CommandArgumentParser("profile")
-        parser.add_argument(dest="profile",help="Profile name")
+        parser.add_argument(dest="profile",default='default',help="Profile name")
+        parser.add_argument('-r','--region',dest='region',default=None,help='region override')
         parser.add_argument('-v','--verbose',dest="verbose",action='store_true',help='verbose')
         args = vars(parser.parse_args(args))
 
         profile = args['profile']
+        region = args['region']
         verbose = args['verbose']
         if verbose:
             print( "Selecting profile '{}'".format(profile) )
@@ -216,7 +218,8 @@ class AwsProcessor(cmd.Cmd):
         awsProfile = profile
         if 'awsProfile' in selectedProfile:
             awsProfile = selectedProfile['awsProfile']
-        AwsConnectionFactory.resetInstance(profile=awsProfile)
+
+        AwsConnectionFactory.resetInstance(profile=awsProfile, regionName=region)
 
     def do_quit(self,args):
         """

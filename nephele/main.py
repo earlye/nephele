@@ -60,7 +60,7 @@ def main():
 
         AwsProcessor.processorFactory = AwsProcessorFactoryImpl()
 
-        awsConfigFilename = os.path.expanduser("~/.aws/config")
+        awsConfigFilename = os.path.expanduser("~/.aws/credentials")
         if not os.path.exists(awsConfigFilename):
             print( "ERROR: aws cli has not been configured." )
             pid = fexecvp(['aws','configure'])

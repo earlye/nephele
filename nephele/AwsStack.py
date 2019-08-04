@@ -52,7 +52,9 @@ class AwsStack(AwsProcessor):
         parameters = {}
         i = 0
         if None != stack.parameters:
-            for parameter in iter(sorted(stack.parameters)):
+            pprint(stack.parameters)
+            for parameter in sorted(stack.parameters, key=lambda x: x['ParameterKey']):
+                pprint(parameter)
                 parameters[i] = WrappedParameter(parameter)
                 i = i + 1
         return parameters

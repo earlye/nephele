@@ -26,7 +26,7 @@ class AwsRoot(AwsProcessor):
             stack = AwsConnectionFactory.instance.getCfResource().Stack(args['stack'])
 
 
-        if 'asg' in args:
+        if 'asg' in args and args['asg']:
             AwsProcessor.processorFactory.Stack(stack,stack.name,self).onecmd('asg {}'.format(args['asg']))
         AwsProcessor.processorFactory.Stack(stack,stack.name,self).cmdloop()
 
